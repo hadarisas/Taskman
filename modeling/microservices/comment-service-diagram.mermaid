@@ -1,0 +1,16 @@
+classDiagram
+class Comment {
+-Long id
+-String content
+-Date createdAt
+-String authorId
+-String entityId
+}
+
+    class EntityType {
+        <<enumeration>>
+        PROJECT
+        TASK
+    }
+
+    Comment -- EntityType

@@ -1,0 +1,19 @@
+classDiagram
+class Task {
+-Long id
+-String title
+-String description
+-Priority priority
+-TaskStatus status
+-Date startDate
+-Date dueDate
+-String projectId
+}
+
+    class TaskAssignment {
+        -Long id
+        -String userId
+        -Date assignedAt
+    }
+
+    Task "1" -- "1" TaskAssignment

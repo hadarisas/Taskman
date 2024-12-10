@@ -1,0 +1,20 @@
+classDiagram
+class Notification {
+-Long id
+-NotificationType type
+-String content
+-Date createdAt
+-String recipientId
+-String entityId
+-EntityType entityType
+}
+
+    class NotificationType {
+        <<enumeration>>
+        TASK_ASSIGNED
+        TASK_COMPLETED
+        PROJECT_UPDATED
+        COMMENT_ADDED
+    }
+
+    Notification -- NotificationType

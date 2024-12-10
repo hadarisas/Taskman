@@ -1,0 +1,54 @@
+classDiagram
+class Project {
+-Long id
+-String name
+-String description
+-Date startDate
+-Date endDate
+-ProjectStatus status  
+ }
+
+    class Task {
+        -Long id
+        -String title
+        -String description
+        -Priority priority
+        -TaskStatus status
+        -Date startDate
+        -Date dueDate
+    }
+
+    class User {
+        -Long id
+        -String name
+        -String email
+        -UserRole role
+    }
+
+    class Team {
+        -Long id
+        -String name
+    }
+
+    class Comment {
+        -Long id
+        -String content
+        -Date createdAt
+    }
+
+    class Notification {
+        -Long id
+        -NotificationType type
+        -String content
+        -Date createdAt
+        -User recipient
+    }
+
+    Project "1" -- "*" Task
+    Project "*" -- "*" User : "Member"
+    Task "*" -- "1" User
+    Team "1" *-- "*" User
+    Comment "*" -- "1" User
+    Comment "*" -- "0..1" Project
+    Comment "*" -- "0..1" Task
+    Notification "*" -- "1" User

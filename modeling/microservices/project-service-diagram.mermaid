@@ -1,0 +1,18 @@
+classDiagram
+class Project {
+-Long id
+-String name
+-String description
+-Date startDate
+-Date endDate
+-ProjectStatus status
+}
+
+    class ProjectMembership {
+        -Long id
+        -String userId
+        -MemberRole role
+        -Date joinedAt
+    }
+
+    Project "1" -- "*" ProjectMembership

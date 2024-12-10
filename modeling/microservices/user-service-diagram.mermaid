@@ -1,0 +1,23 @@
+classDiagram
+class User {
+-Long id
+-String name
+-String email
+-UserRole role
+}
+
+    class Team {
+        -Long id
+        -String name
+    }
+
+    class TeamMembership {
+        -Long id
+        -String teamId
+        -String userId
+        -TeamRole role
+        -Date joinedAt
+    }
+
+    Team "1" -- "*" TeamMembership
+    TeamMembership "*" -- "1" User

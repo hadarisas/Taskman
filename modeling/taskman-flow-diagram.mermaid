@@ -1,0 +1,39 @@
+flowchart TD
+    A[Début] --> B{Authentification}
+    B --> |Connexion Réussie| C[Tableau de Bord]
+    B --> |Échec de Connexion| B
+    
+    C --> D{Sélection Action}
+    D --> |Créer Projet| E[Formulaire Nouveau Projet]
+    D --> |Créer Tâche| F[Formulaire Nouvelle Tâche]
+    D --> |Rejoindre Équipe| G[Liste des Équipes]
+    
+    E --> H{Validation Projet}
+    H --> |Valide| I[Enregistrement Projet]
+    H --> |Invalide| E
+    
+    F --> J{Validation Tâche}
+    J --> |Valide| K[Enregistrement Tâche]
+    J --> |Invalide| F
+    
+    I --> L[Affecter Membres]
+    K --> M[Assigner à un Membre]
+    
+    L --> N[Notifications aux Membres]
+    M --> O[Notifications au Membre]
+    
+    N --> P[Mise à Jour Projet]
+    O --> Q[Mise à Jour Tâche]
+    
+    P --> R[Suivi Avancement]
+    Q --> R
+    
+    R --> S{État du Projet/Tâche}
+    S --> |En Cours| T[Commentaires/Discussions]
+    S --> |Terminé| U[Génération Rapport]
+    
+    T --> V[Notifications]
+    U --> W[Archivage]
+    
+    V --> D
+    W --> X[Fin]

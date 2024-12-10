@@ -1,0 +1,60 @@
+flowchart TB
+    subgraph Utilisateur
+        direction TB
+        U1[Authentification]
+        U2[Gestion de Profil]
+        U3[Rejoindre/Quitter une Équipe]
+    end
+
+    subgraph Projet
+        direction TB
+        P1[Créer un Projet]
+        P2[Modifier un Projet]
+        P3[Supprimer un Projet]
+        P4[Affecter des Membres]
+        P5[Rechercher/Filtrer Projets]
+    end
+
+    subgraph Tache
+        direction TB
+        T1[Créer une Tâche]
+        T2[Modifier une Tâche]
+        T3[Supprimer une Tâche]
+        T4[Assigner une Tâche]
+        T5[Changer l'État d'une Tâche]
+    end
+
+    subgraph Collaboration
+        direction TB
+        C1[Ajouter un Commentaire]
+        C2[Partager des Fichiers]
+        C3[Recevoir des Notifications]
+    end
+
+    subgraph Reporting
+        direction TB
+        R1[Générer des Rapports]
+        R2[Visualiser des Tableaux de Bord]
+    end
+
+    Administrateur --> U1
+    Administrateur --> P1
+    Administrateur --> P2
+    Administrateur --> P3
+    Administrateur --> P4
+
+    Membre --> U1
+    Membre --> U2
+    Membre --> U3
+    Membre --> P5
+    Membre --> T1
+    Membre --> T2
+    Membre --> T3
+    Membre --> T4
+    Membre --> T5
+    Membre --> C1
+    Membre --> C2
+    Membre --> R2
+
+    Tous --> C3
+    Tous --> R1
