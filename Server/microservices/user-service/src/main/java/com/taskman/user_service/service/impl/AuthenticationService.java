@@ -29,10 +29,10 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse response) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.getEmail(),
-                    request.getPassword()
-                )
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
             );
 
             User user = (User) authentication.getPrincipal();
@@ -40,18 +40,19 @@ public class AuthenticationService {
             String refreshToken = jwtService.generateRefreshToken(user);
 
             // Set cookies using CookieUtil
-            cookieUtil.createCookie(response, "access_token", accessToken, 24 * 60 * 60); // 1 day
-            cookieUtil.createCookie(response, "refresh_token", refreshToken, 7 * 24 * 60 * 60); // 7 days
+            cookieUtil.createCookie(response, "access_token", accessToken, 24 * 60 * 60);
+            cookieUtil.createCookie(response, "refresh_token", refreshToken, 7 * 24 * 60 * 60);
 
             return AuthenticationResponse.builder()
                     .message("Authentication successful")
-                    .user(convertToDTO(user))//convertToDTO(user)
+                    .user(convertToDTO(user))
+                    .accessToken(accessToken)     // This should match the field name in AuthenticationResponse
+                    .refreshToken(refreshToken)   // This should match the field name in AuthenticationResponse
                     .build();
         } catch (Exception e) {
             throw new AuthenticationFailedException("Authentication failed: " + e.getMessage());
         }
     }
-
     public AuthenticationResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
         final String refreshToken = cookieUtil.extractToken(request, "refresh_token");
         if (refreshToken == null) {
@@ -76,6 +77,8 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .message("Token refreshed successfully")
                 .user(convertToDTO(user))
+                .accessToken(accessToken)     // Include new access token in response
+                .refreshToken(refreshToken)   // Include existing refresh token in response
                 .build();
     }
 
@@ -88,4 +91,4 @@ public class AuthenticationService {
                 .active(user.isActive())
                 .build();
     }
-} 
+}

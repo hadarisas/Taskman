@@ -8,6 +8,7 @@ import com.taskman.project_service.service.interfaces.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,7 +35,6 @@ public class ProjectController {
     public ResponseEntity<ProjectDTO> getProject(@PathVariable Long id) {
         return ResponseEntity.ok(projectService.getProjectById(id));
     }
-
     @GetMapping
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());

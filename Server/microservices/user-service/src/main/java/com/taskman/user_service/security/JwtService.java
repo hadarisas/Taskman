@@ -1,10 +1,12 @@
 package com.taskman.user_service.security;
 
+import com.taskman.user_service.entity.User; // Add this import
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority; // Add this import
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -13,20 +15,28 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors; // Add this import
 
 @Service
 public class JwtService {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
-    
+
     @Value("${application.security.jwt.access-token.expiration}")
     private long accessTokenExpiration;
-    
+
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshTokenExpiration;
 
     public String generateAccessToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails, accessTokenExpiration);
+        Map<String, Object> claims = new HashMap<>();
+        if (userDetails instanceof User) {
+            claims.put("userId", ((User) userDetails).getId());
+            claims.put("roles", userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList()));
+        }
+        return generateToken(claims, userDetails, accessTokenExpiration);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
@@ -76,4 +86,4 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
-} 
+}
