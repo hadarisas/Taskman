@@ -14,8 +14,8 @@ public interface ProjectService {
     ProjectDTO createProject(CreateProjectRequest request, String userId);
     ProjectDTO getProjectById(Long id);
     List<ProjectDTO> getAllProjects();
-    ProjectDTO updateProject(Long id, UpdateProjectRequest request);
-    void deleteProject(Long id);
+    ProjectDTO updateProject(Long id, UpdateProjectRequest request, String userId);
+    void deleteProject(Long id, String userId);
 
     // Project search and filter operations
     List<ProjectDTO> findProjectsByName(String name);
@@ -24,7 +24,7 @@ public interface ProjectService {
     List<ProjectDTO> findProjectsByStatusAndUserId(ProjectStatus status, String userId);
 
     // Project membership operations
-    ProjectMembershipDTO addMemberToProject(Long projectId, String userId, MemberRole role);
+    ProjectMembershipDTO addMemberToProject(Long projectId, String userId, String targetUserId, MemberRole role);
     void removeMemberFromProject(Long projectId, String userId);
     ProjectMembershipDTO updateMemberRole(Long projectId, String userId, MemberRole newRole);
     List<ProjectMembershipDTO> getProjectMembers(Long projectId);

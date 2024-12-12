@@ -31,6 +31,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMembershipDao membershipDao;
 
     @Override
+    @Transactional
     public ProjectDTO createProject(CreateProjectRequest request, String userId) {
         if (existsByName(request.getName())) {
             throw new ProjectNameAlreadyExistsException(request.getName());
@@ -46,7 +47,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project savedProject = projectDao.save(project);
 
-        // Add creator as ADMIN member
+        // Create membership record for the creator with ADMIN role
         ProjectMembership membership = ProjectMembership.builder()
                 .project(savedProject)
                 .userId(userId)
@@ -56,7 +57,14 @@ public class ProjectServiceImpl implements ProjectService {
 
         membershipDao.save(membership);
 
-        return convertToDTO(savedProject);
+        // Store project ID before refresh
+        Long projectId = savedProject.getId();
+
+        // Refresh the project to get the updated memberships
+        Project refreshedProject = projectDao.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+
+        return convertToDTO(refreshedProject);
     }
 
     @Override
@@ -74,29 +82,50 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDTO updateProject(Long id, UpdateProjectRequest request) {
+    public ProjectDTO updateProject(Long id, UpdateProjectRequest request, String userId) {
         Project project = projectDao.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
 
-        if (!project.getName().equals(request.getName()) && existsByName(request.getName())) {
-            throw new ProjectNameAlreadyExistsException(request.getName());
+        // Check if user has admin rights
+        if (!isUserProjectAdmin(id, userId)) {
+            throw new ProjectAccessDeniedException(userId, id);
         }
 
-        project.setName(request.getName());
-        project.setDescription(request.getDescription());
-        project.setStartDate(request.getStartDate());
-        project.setEndDate(request.getEndDate());
-        project.setStatus(request.getStatus());
+        // Only update name if it's provided and different
+        if (request.getName() != null && !request.getName().equals(project.getName())) {
+            if (existsByName(request.getName())) {
+                throw new ProjectNameAlreadyExistsException(request.getName());
+            }
+            project.setName(request.getName());
+        }
+
+        // Only update fields that are provided in the request
+        if (request.getDescription() != null) {
+            project.setDescription(request.getDescription());
+        }
+        if (request.getStartDate() != null) {
+            project.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            project.setEndDate(request.getEndDate());
+        }
+        if (request.getStatus() != null) {
+            project.setStatus(request.getStatus());
+        }
 
         Project updatedProject = projectDao.save(project);
         return convertToDTO(updatedProject);
     }
 
     @Override
-    public void deleteProject(Long id) {
-        if (!projectDao.existsById(id)) {
-            throw new ProjectNotFoundException(id);
+    public void deleteProject(Long id, String userId) {
+        Project project = projectDao.findById(id)
+                .orElseThrow(() -> new ProjectNotFoundException(id));
+
+        if (!isUserProjectAdmin(id, userId)) {
+            throw new ProjectAccessDeniedException(userId, id);
         }
+
         projectDao.deleteById(id);
     }
 
@@ -129,17 +158,21 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectMembershipDTO addMemberToProject(Long projectId, String userId, MemberRole role) {
+    public ProjectMembershipDTO addMemberToProject(Long projectId, String userId, String targetUserId, MemberRole role) {
         Project project = projectDao.findById(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-        if (isUserInProject(projectId, userId)) {
+        if (!isUserProjectAdmin(projectId, userId)) {
+            throw new ProjectAccessDeniedException(userId, projectId);
+        }
+
+        if (isUserInProject(projectId, targetUserId)) {
             throw new IllegalStateException("User is already a member of this project");
         }
 
         ProjectMembership membership = ProjectMembership.builder()
                 .project(project)
-                .userId(userId)
+                .userId(targetUserId)
                 .role(role)
                 .joinedAt(new Date())
                 .build();
@@ -178,6 +211,12 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public boolean existsByName(String name) {
         return projectDao.existsByName(name);
+    }
+
+    private boolean isUserProjectAdmin(Long projectId, String userId) {
+        return membershipDao.findByProjectIdAndUserId(projectId, userId)
+                .map(membership -> membership.getRole() == MemberRole.ADMIN)
+                .orElse(false);
     }
 
     private ProjectDTO convertToDTO(Project project) {

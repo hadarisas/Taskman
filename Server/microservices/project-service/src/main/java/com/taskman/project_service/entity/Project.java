@@ -4,6 +4,7 @@ import com.taskman.project_service.entity.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class Project {
     @Column(nullable = false)
     private ProjectStatus status;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProjectMembership> memberships;
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Builder.Default
+    private List<ProjectMembership> memberships = new ArrayList<>();
 }

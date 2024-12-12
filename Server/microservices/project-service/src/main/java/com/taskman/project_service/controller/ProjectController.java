@@ -1,14 +1,16 @@
 package com.taskman.project_service.controller;
 
 import com.taskman.project_service.dto.ProjectDTO;
+import com.taskman.project_service.dto.ProjectMembershipDTO;
 import com.taskman.project_service.dto.request.CreateProjectRequest;
 import com.taskman.project_service.dto.request.UpdateProjectRequest;
+import com.taskman.project_service.entity.enums.MemberRole;
 import com.taskman.project_service.entity.enums.ProjectStatus;
+import com.taskman.project_service.security.JwtService;
 import com.taskman.project_service.service.interfaces.ProjectService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,23 +20,30 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final JwtService jwtService;
 
     // Constructor injection
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, JwtService jwtService) {
         this.projectService = projectService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping
     public ResponseEntity<ProjectDTO> createProject(
             @Valid @RequestBody CreateProjectRequest request,
-            @RequestHeader("X-User-Id") String userId) {
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
         return new ResponseEntity<>(projectService.createProject(request, userId), HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ProjectDTO> getProject(@PathVariable Long id) {
-        return ResponseEntity.ok(projectService.getProjectById(id));
+    @GetMapping("/{projectId}")
+    public ResponseEntity<ProjectDTO> getProject(
+            @PathVariable("projectId") Long projectId,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
+
     @GetMapping
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());
@@ -43,13 +52,18 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<ProjectDTO> updateProject(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateProjectRequest request) {
-        return ResponseEntity.ok(projectService.updateProject(id, request));
+            @Valid @RequestBody UpdateProjectRequest request,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.updateProject(id, request, userId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
-        projectService.deleteProject(id);
+    public ResponseEntity<Void> deleteProject(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        projectService.deleteProject(id, userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -73,6 +87,26 @@ public class ProjectController {
         }
 
         return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+    @PostMapping("/{projectId}/members")
+    public ResponseEntity<ProjectMembershipDTO> addMemberToProject(
+            @PathVariable Long projectId,
+            @RequestParam String targetUserId,
+            @RequestParam MemberRole role,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.addMemberToProject(projectId, userId, targetUserId, role));
+    }
+
+    @DeleteMapping("/{projectId}/members/{memberId}")
+    public ResponseEntity<Void> removeMemberFromProject(
+            @PathVariable Long projectId,
+            @PathVariable String memberId,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        projectService.removeMemberFromProject(projectId, memberId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/check-name")

@@ -2,6 +2,7 @@ package com.taskman.project_service.controller;
 
 import com.taskman.project_service.dto.ProjectMembershipDTO;
 import com.taskman.project_service.entity.enums.MemberRole;
+import com.taskman.project_service.security.JwtService;
 import com.taskman.project_service.service.interfaces.ProjectService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,45 +14,29 @@ import java.util.List;
 public class ProjectMembershipController {
 
     private final ProjectService projectService;
+    private final JwtService jwtService;
 
-    // Constructor injection
-    public ProjectMembershipController(ProjectService projectService) {
+    public ProjectMembershipController(ProjectService projectService, JwtService jwtService) {
         this.projectService = projectService;
+        this.jwtService = jwtService;
     }
 
-    @PostMapping("/{userId}")
-    public ResponseEntity<ProjectMembershipDTO> addMember(
-            @PathVariable Long projectId,
-            @PathVariable String userId,
-            @RequestParam MemberRole role) {
-        return ResponseEntity.ok(projectService.addMemberToProject(projectId, userId, role));
-    }
-
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> removeMember(
-            @PathVariable Long projectId,
-            @PathVariable String userId) {
-        projectService.removeMemberFromProject(projectId, userId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{userId}/role")
+    @PutMapping("/{targetUserId}/role")
     public ResponseEntity<ProjectMembershipDTO> updateMemberRole(
             @PathVariable Long projectId,
-            @PathVariable String userId,
-            @RequestParam MemberRole role) {
-        return ResponseEntity.ok(projectService.updateMemberRole(projectId, userId, role));
+            @PathVariable String targetUserId,
+            @RequestParam MemberRole role,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.updateMemberRole(projectId, targetUserId, role));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ProjectMembershipDTO>> getMembers(@PathVariable Long projectId) {
-        return ResponseEntity.ok(projectService.getProjectMembers(projectId));
-    }
-
-    @GetMapping("/{userId}/check")
+    @GetMapping("/{targetUserId}/check")
     public ResponseEntity<Boolean> checkMembership(
             @PathVariable Long projectId,
-            @PathVariable String userId) {
-        return ResponseEntity.ok(projectService.isUserInProject(projectId, userId));
+            @PathVariable String targetUserId,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.isUserInProject(projectId, targetUserId));
     }
 }
