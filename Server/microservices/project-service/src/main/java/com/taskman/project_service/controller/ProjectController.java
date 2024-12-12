@@ -22,7 +22,6 @@ public class ProjectController {
     private final ProjectService projectService;
     private final JwtService jwtService;
 
-    // Constructor injection
     public ProjectController(ProjectService projectService, JwtService jwtService) {
         this.projectService = projectService;
         this.jwtService = jwtService;

@@ -1,37 +1,81 @@
 package com.taskman.project_service.exception;
 
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(com.taskman.project_service.exception.ProjectNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleProjectNotFoundException(com.taskman.project_service.exception.ProjectNotFoundException ex) {
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
+    @ExceptionHandler(NoHandlerFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ApiResponse(responseCode = "404", description = "Endpoint not found")
+    public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Endpoint not found: " + ex.getRequestURL(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ApiResponse(responseCode = "404", description = "User not found")
+    public ResponseEntity<ErrorResponse> handleUserNotFoundException(ProjectNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ProjectNameAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleProjectNameAlreadyExistsException(ProjectNameAlreadyExistsException ex) {
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.CONFLICT);
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ApiResponse(responseCode = "409", description = "Project already exists")
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExistsException(ProjectNameAlreadyExistsException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(ProjectMembershipNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleProjectMembershipNotFoundException(ProjectMembershipNotFoundException ex) {
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ApiResponse(responseCode = "404", description = "Project membership not found")
+    public ResponseEntity<ErrorResponse> handleTeamNotFoundException(ProjectMembershipNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ProjectAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleProjectAccessDeniedException(ProjectAccessDeniedException ex) {
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ApiResponse(responseCode = "403", description = "You do not have permission to access this resource")
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(ProjectAccessDeniedException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -46,10 +90,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        return new ResponseEntity<>(
-                new ErrorResponse("An unexpected error occurred"),
-                HttpStatus.INTERNAL_SERVER_ERROR
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public ResponseEntity<ErrorResponse> handleAllUncaughtException(Exception ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "An unexpected error occurred: " + ex.getMessage(),
+                LocalDateTime.now()
         );
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 }

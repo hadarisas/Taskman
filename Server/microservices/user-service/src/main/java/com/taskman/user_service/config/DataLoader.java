@@ -16,7 +16,6 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Create admin user if not exists
         if (userRepository.findByEmail("hadarisas@gmail.com").isEmpty()) {
             User admin = User.builder()
                     .name("Hadarisas")

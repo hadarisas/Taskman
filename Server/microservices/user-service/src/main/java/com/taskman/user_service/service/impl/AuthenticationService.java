@@ -46,8 +46,8 @@ public class AuthenticationService {
             return AuthenticationResponse.builder()
                     .message("Authentication successful")
                     .user(convertToDTO(user))
-                    .accessToken(accessToken)     // This should match the field name in AuthenticationResponse
-                    .refreshToken(refreshToken)   // This should match the field name in AuthenticationResponse
+                    .accessToken(accessToken)     
+                    .refreshToken(refreshToken)  
                     .build();
         } catch (Exception e) {
             throw new AuthenticationFailedException("Authentication failed: " + e.getMessage());

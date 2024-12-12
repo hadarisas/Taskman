@@ -47,7 +47,6 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project savedProject = projectDao.save(project);
 
-        // Create membership record for the creator with ADMIN role
         ProjectMembership membership = ProjectMembership.builder()
                 .project(savedProject)
                 .userId(userId)
@@ -57,10 +56,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         membershipDao.save(membership);
 
-        // Store project ID before refresh
         Long projectId = savedProject.getId();
 
-        // Refresh the project to get the updated memberships
         Project refreshedProject = projectDao.findById(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
@@ -86,12 +83,10 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectDao.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
 
-        // Check if user has admin rights
         if (!isUserProjectAdmin(id, userId)) {
             throw new ProjectAccessDeniedException(userId, id);
         }
 
-        // Only update name if it's provided and different
         if (request.getName() != null && !request.getName().equals(project.getName())) {
             if (existsByName(request.getName())) {
                 throw new ProjectNameAlreadyExistsException(request.getName());
@@ -99,7 +94,6 @@ public class ProjectServiceImpl implements ProjectService {
             project.setName(request.getName());
         }
 
-        // Only update fields that are provided in the request
         if (request.getDescription() != null) {
             project.setDescription(request.getDescription());
         }

@@ -26,6 +26,5 @@ public class TokenRefreshFilterFactory extends AbstractGatewayFilterFactory<Toke
     }
 
     public static class Config {
-        // Configuration properties if needed
     }
 }
