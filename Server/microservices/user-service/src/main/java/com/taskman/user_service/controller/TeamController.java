@@ -71,12 +71,6 @@ public class TeamController {
         teamService.deleteTeam(id);
     }
 
-    // Add member to team
-    @PostMapping("/{teamId}/members/{userId}")
-    public TeamMembershipDTO addMemberToTeam(@PathVariable Long teamId, @PathVariable Long userId, @RequestBody TeamRole role) {
-        return teamService.addMemberToTeam(teamId, userId, role);
-    }
-
     // Remove member from team
     @DeleteMapping("/{teamId}/members/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

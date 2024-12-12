@@ -6,26 +6,31 @@ import com.taskman.user_service.dto.request.CreateUserRequest;
 import com.taskman.user_service.dto.request.UpdateUserRequest;
 import com.taskman.user_service.dto.request.UpdateUserRoleRequest;
 import com.taskman.user_service.service.interfaces.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     // Create user
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDTO createUser(@Valid @RequestBody CreateUserRequest request) {
-        return userService.createUser(request);
+    @PostMapping("/register")
+    @Operation(summary = "Register new user")
+    @ApiResponse(responseCode = "201", description = "User created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input")
+    public ResponseEntity<UserDTO> registerUser(@Valid @RequestBody CreateUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(userService.createUser(request));
     }
 
     // Get user by id

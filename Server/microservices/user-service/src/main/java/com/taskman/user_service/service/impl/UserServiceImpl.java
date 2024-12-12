@@ -13,6 +13,7 @@ import com.taskman.user_service.exception.UserNotFoundException;
 import com.taskman.user_service.repository.TeamMembershipRepository;
 import com.taskman.user_service.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
     private final TeamMembershipRepository membershipRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDTO createUser(CreateUserRequest request) {
@@ -36,7 +38,9 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .role(UserRole.USER)
+                .active(true)
                 .build();
 
         User savedUser = userDao.save(user);
