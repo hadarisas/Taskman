@@ -13,6 +13,9 @@ import com.taskman.project_service.entity.enums.ProjectStatus;
 import com.taskman.project_service.exception.ProjectAccessDeniedException;
 import com.taskman.project_service.exception.ProjectNameAlreadyExistsException;
 import com.taskman.project_service.exception.ProjectNotFoundException;
+import com.taskman.project_service.kafka.event.TaskEvent;
+import com.taskman.project_service.kafka.event.ProjectEvent;
+import com.taskman.project_service.kafka.producer.ProjectEventProducer;
 import com.taskman.project_service.service.interfaces.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectDao projectDao;
     private final ProjectMembershipDao membershipDao;
+    private final ProjectEventProducer projectEventProducer;
 
     @Override
     @Transactional
@@ -205,6 +209,104 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public boolean existsByName(String name) {
         return projectDao.existsByName(name);
+    }
+
+    @Override
+    @Transactional
+    public void handleTaskCreated(TaskEvent event) {
+        Project project = getProject(Long.valueOf(event.getProjectId()));
+        project.setTotalTasks(project.getTotalTasks() + 1);
+        
+        if (ProjectStatus.NOT_STARTED.equals(project.getStatus())) {
+            project.setStatus(ProjectStatus.IN_PROGRESS);
+            
+            // Send project status update event
+            sendProjectStatusUpdateEvent(project);
+        }
+        
+        updateProject(project);
+    }
+
+    @Override
+    @Transactional
+    public void handleTaskCompleted(TaskEvent event) {
+        Project project = getProject(Long.valueOf(event.getProjectId()));
+        project.setCompletedTasks(project.getCompletedTasks() + 1);
+        
+        if (project.getCompletedTasks().equals(project.getTotalTasks())) {
+            project.setStatus(ProjectStatus.COMPLETED);
+            
+            // Send project completed event
+            sendProjectStatusUpdateEvent(project);
+        }
+        
+        updateProject(project);
+    }
+
+    @Override
+    @Transactional
+    public void handleTaskDeleted(TaskEvent event) {
+        Project project = getProject(Long.valueOf(event.getProjectId()));
+        project.setTotalTasks(project.getTotalTasks() - 1);
+        
+        if ("COMPLETED".equals(event.getEventType())) {
+            project.setCompletedTasks(project.getCompletedTasks() - 1);
+        }
+        
+        updateProjectStatus(project);
+        updateProject(project);
+    }
+
+    @Override
+    public Project getProject(Long id) {
+        return projectDao.findById(id)
+                .orElseThrow(() -> new ProjectNotFoundException(id));
+    }
+
+    @Override
+    @Transactional
+    public void updateProject(Project project) {
+        projectDao.save(project);
+    }
+
+    // Helper methods
+    private void updateProjectStatus(Project project) {
+        ProjectStatus oldStatus = project.getStatus();
+        ProjectStatus newStatus;
+        
+        if (project.getTotalTasks() == 0) {
+            newStatus = ProjectStatus.NOT_STARTED;
+        } else if (project.getCompletedTasks().equals(project.getTotalTasks())) {
+            newStatus = ProjectStatus.COMPLETED;
+        } else {
+            newStatus = ProjectStatus.IN_PROGRESS;
+        }
+        
+        if (oldStatus != newStatus) {
+            project.setStatus(newStatus);
+            sendProjectStatusUpdateEvent(project);
+        }
+    }
+
+    private void sendProjectStatusUpdateEvent(Project project) {
+        String managerId = project.getMemberships().stream()
+                .filter(membership -> MemberRole.ADMIN.equals(membership.getRole()))
+                .findFirst()
+                .map(ProjectMembership::getUserId)
+                .orElse(null);
+
+        ProjectEvent event = ProjectEvent.builder()
+                .eventType(ProjectStatus.COMPLETED.equals(project.getStatus()) 
+                        ? "PROJECT_COMPLETED" 
+                        : "PROJECT_UPDATED")
+                .projectId(String.valueOf(project.getId()))
+                .projectName(project.getName())
+                .description("Project status updated to: " + project.getStatus())
+                .managerId(managerId)
+                .status(project.getStatus().toString())
+                .build();
+
+        projectEventProducer.sendProjectEvent(event);
     }
 
     private boolean isUserProjectAdmin(Long projectId, String userId) {

@@ -27,7 +27,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
     @Bean
     public OpenAPI customOpenAPI() {
         Server localServer = new Server()
-                .url("http://localhost:3003")
+                .url("http://localhost:3004")
                 .description("Comment Service");
 
         Contact contact = new Contact()

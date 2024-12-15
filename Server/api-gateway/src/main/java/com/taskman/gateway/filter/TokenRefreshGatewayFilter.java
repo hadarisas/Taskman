@@ -66,7 +66,7 @@ public class TokenRefreshGatewayFilter implements GatewayFilter {
                 return chain.filter(mutatedExchange);
             }
         } catch (Exception e) {
-            // Log error and continue with original response
+            // we'll decide later
         }
 
         return Mono.empty();

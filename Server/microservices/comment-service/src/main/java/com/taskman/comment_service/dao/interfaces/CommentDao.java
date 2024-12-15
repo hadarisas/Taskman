@@ -25,4 +25,7 @@ public interface CommentDao {
     
     boolean hasUserCommented(String entityId, EntityType entityType, String authorId);
     void deleteByEntity(String entityId, EntityType entityType);
+    
+    List<Comment> findByEntityId(String entityId, EntityType entityType);
+    List<Comment> findByAuthor(String authorId);
 } 

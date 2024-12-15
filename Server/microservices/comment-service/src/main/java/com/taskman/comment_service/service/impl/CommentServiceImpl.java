@@ -11,7 +11,7 @@ import com.taskman.comment_service.entity.enums.EntityType;
 import com.taskman.comment_service.exception.CommentAccessDeniedException;
 import com.taskman.comment_service.exception.CommentNotFoundException;
 import com.taskman.comment_service.exception.InvalidCommentException;
-import com.taskman.comment_service.kafka.CommentEventProducer;
+import com.taskman.comment_service.kafka.producer.CommentEventProducer;
 import com.taskman.comment_service.service.interfaces.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,7 +33,6 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentDTO createComment(CreateCommentRequest request, String authorId) {
-        // Validate parent comment if it exists
         if (request.getParentCommentId() != null) {
             commentDao.findById(request.getParentCommentId())
                     .orElseThrow(() -> new InvalidCommentException("Parent comment not found"));
@@ -49,7 +48,6 @@ public class CommentServiceImpl implements CommentService {
 
         Comment savedComment = commentDao.save(comment);
 
-        // Send event for notification
         sendCommentEvent("CREATED", savedComment);
 
         return convertToDTO(savedComment);
@@ -150,8 +148,36 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public void deleteAllCommentsByEntity(String entityId, EntityType entityType) {
+        List<Comment> comments = commentDao.findByEntityId(entityId, entityType);
+        
+        comments.forEach(comment ->
+            commentEventProducer.sendCommentEvent("DELETED", comment)
+        );
+        
         commentDao.deleteByEntity(entityId, entityType);
+    }
+
+    @Override
+    @Transactional
+    public void handleDeletedUser(String userId) {
+        List<Comment> userComments = commentDao.findByAuthor(userId);
+        userComments.forEach(comment -> {
+            comment.setAuthorId("DELETED_USER");
+            comment.setContent("[This comment was made by a deleted user]");
+            commentDao.save(comment);
+            
+            commentEventProducer.sendCommentEvent("UPDATED", comment);
+        });
+        
+
+        userComments.forEach(comment -> {
+            commentEventProducer.sendCommentEvent("DELETED", comment);
+            commentDao.deleteById(comment.getId());
+        });
+        
+        
     }
 
     private CommentResponse createCommentResponse(Page<Comment> commentPage) {

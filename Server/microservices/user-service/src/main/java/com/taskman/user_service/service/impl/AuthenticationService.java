@@ -39,7 +39,6 @@ public class AuthenticationService {
             String accessToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
-            // Set cookies using CookieUtil
             cookieUtil.createCookie(response, "access_token", accessToken, 24 * 60 * 60);
             cookieUtil.createCookie(response, "refresh_token", refreshToken, 7 * 24 * 60 * 60);
 
@@ -77,8 +76,8 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .message("Token refreshed successfully")
                 .user(convertToDTO(user))
-                .accessToken(accessToken)     // Include new access token in response
-                .refreshToken(refreshToken)   // Include existing refresh token in response
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 

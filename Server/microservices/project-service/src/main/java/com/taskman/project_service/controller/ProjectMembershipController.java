@@ -20,7 +20,6 @@ public class ProjectMembershipController {
         this.projectService = projectService;
         this.jwtService = jwtService;
     }
-
     @PutMapping("/{targetUserId}/role")
     public ResponseEntity<ProjectMembershipDTO> updateMemberRole(
             @PathVariable Long projectId,

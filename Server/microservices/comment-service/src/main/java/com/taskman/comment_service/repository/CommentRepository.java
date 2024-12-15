@@ -67,6 +67,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     
     // Delete all comments for an entity
     void deleteByEntityIdAndEntityType(String entityId, EntityType entityType);
-    void deleteAllByEntityTypeAndEntityId(EntityType entityType, String entityId);
-
-} 
+    
+    List<Comment> findByEntityIdAndEntityType(String entityId, EntityType entityType);
+    List<Comment> findByAuthorId(String authorId);
+}

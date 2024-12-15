@@ -12,7 +12,9 @@ import com.taskman.task_service.entity.enums.TaskStatus;
 import com.taskman.task_service.exception.TaskAccessDeniedException;
 import com.taskman.task_service.exception.TaskNotFoundException;
 import com.taskman.task_service.exception.InvalidTaskAssignmentException;
+import com.taskman.task_service.kafka.event.TaskEvent;
 import com.taskman.task_service.service.interfaces.TaskService;
+import com.taskman.task_service.kafka.producer.TaskEventProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ public class TaskServiceImpl implements TaskService {
 
     private final TaskDao taskDao;
     private final TaskAssignmentDao taskAssignmentDao;
+    private final TaskEventProducer taskEventProducer;
 
     @Override
     public TaskDTO createTask(CreateTaskRequest request, String userId) {
@@ -43,6 +46,15 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         Task savedTask = taskDao.save(task);
+        
+        TaskEvent event = TaskEvent.builder()
+                .taskId(savedTask.getId().toString())
+                .taskTitle(savedTask.getTitle())
+                .projectId(savedTask.getProjectId())
+                .description(savedTask.getDescription())
+                .build();
+        taskEventProducer.sendTaskCreatedEvent(event);
+
         return convertToDTO(savedTask);
     }
 
@@ -69,26 +81,45 @@ public class TaskServiceImpl implements TaskService {
             throw new TaskAccessDeniedException(userId, id);
         }
 
+        boolean hasChanges = false;
+        
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
+            hasChanges = true;
         }
         if (request.getDescription() != null) {
             task.setDescription(request.getDescription());
+            hasChanges = true;
         }
         if (request.getPriority() != null) {
             task.setPriority(request.getPriority());
+            hasChanges = true;
         }
         if (request.getStatus() != null) {
             task.setStatus(request.getStatus());
+            hasChanges = true;
         }
         if (request.getStartDate() != null) {
             task.setStartDate(request.getStartDate());
+            hasChanges = true;
         }
         if (request.getDueDate() != null) {
             task.setDueDate(request.getDueDate());
+            hasChanges = true;
         }
 
         Task updatedTask = taskDao.save(task);
+        
+        if (hasChanges) {
+            TaskEvent event = TaskEvent.builder()
+                    .taskId(updatedTask.getId().toString())
+                    .taskTitle(updatedTask.getTitle())
+                    .projectId(updatedTask.getProjectId())
+                    .description(updatedTask.getDescription())
+                    .build();
+            taskEventProducer.sendTaskUpdatedEvent(event);
+        }
+
         return convertToDTO(updatedTask);
     }
 
@@ -156,6 +187,17 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         TaskAssignment savedAssignment = taskAssignmentDao.save(assignment);
+
+        TaskEvent event = TaskEvent.builder()
+                .taskId(task.getId().toString())
+                .taskTitle(task.getTitle())
+                .assigneeId(assigneeId)
+                .assignerId(assignerId)
+                .projectId(task.getProjectId())
+                .description(task.getDescription())
+                .build();
+        taskEventProducer.sendTaskAssignedEvent(event);
+
         return convertAssignmentToDTO(savedAssignment);
     }
 
@@ -190,6 +232,18 @@ public class TaskServiceImpl implements TaskService {
 
         task.setStatus(newStatus);
         Task updatedTask = taskDao.save(task);
+
+        if (newStatus == TaskStatus.DONE) {
+            TaskEvent event = TaskEvent.builder()
+                    .taskId(task.getId().toString())
+                    .taskTitle(task.getTitle())
+                    .assigneeId(userId)
+                    .projectId(task.getProjectId())
+                    .description(task.getDescription())
+                    .build();
+            taskEventProducer.sendTaskCompletedEvent(event);
+        }
+
         return convertToDTO(updatedTask);
     }
 

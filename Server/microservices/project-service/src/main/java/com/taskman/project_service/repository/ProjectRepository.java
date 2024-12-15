@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    // Find projects by name (case-insensitive)
+    // Find projects by name
     List<Project> findByNameContainingIgnoreCase(String name);
 
     // Find projects by status

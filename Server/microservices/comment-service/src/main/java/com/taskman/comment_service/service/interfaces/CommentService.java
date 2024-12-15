@@ -28,4 +28,6 @@ public interface CommentService {
     long getReplyCount(Long parentCommentId);
     boolean hasUserCommented(String entityId, EntityType entityType, String userId);
     void deleteAllCommentsByEntity(String entityId, EntityType entityType);
+
+    void handleDeletedUser(String userId);
 } 

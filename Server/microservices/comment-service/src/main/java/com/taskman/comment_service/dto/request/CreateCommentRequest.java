@@ -22,5 +22,5 @@ public class CreateCommentRequest {
     @NotNull(message = "Entity type is required")
     private EntityType entityType;
 
-    private Long parentCommentId;  // Optional, for replies
+    private Long parentCommentId;  
 } 

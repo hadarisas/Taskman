@@ -37,7 +37,6 @@ public class JwtService {
 
     public String extractUserId(String token) {
         Claims claims = extractAllClaims(token);
-        // Convert Integer to String if needed
         Object userIdObj = claims.get("userId");
         if (userIdObj instanceof Integer) {
             return String.valueOf(userIdObj);

@@ -1,6 +1,6 @@
-package com.taskman.comment_service.kafka;
+package com.taskman.comment_service.kafka.producer;
 
-import com.taskman.comment_service.dto.event.CommentEvent;
+import com.taskman.comment_service.kafka.event.CommentEvent;
 import com.taskman.comment_service.entity.Comment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class CommentEventProducer {
 
-    private final KafkaTemplate<String, CommentEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${spring.kafka.topic.comment-events}")
     private String topicName;
@@ -27,7 +27,7 @@ public class CommentEventProducer {
                 .content(comment.getContent())
                 .authorId(comment.getAuthorId())
                 .entityId(comment.getEntityId())
-                .entityType(comment.getEntityType())
+                .entityType(comment.getEntityType().toString())
                 .parentCommentId(comment.getParentCommentId())
                 .timestamp(new Date())
                 .build();

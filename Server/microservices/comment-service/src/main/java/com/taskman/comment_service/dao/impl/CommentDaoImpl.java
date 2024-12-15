@@ -87,6 +87,19 @@ public class CommentDaoImpl implements CommentDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Comment> findByEntityId(String entityId, EntityType entityType) {
+        return commentRepository.findByEntityIdAndEntityType(entityId, entityType);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Comment> findByAuthor(String authorId) {
+        return commentRepository.findByAuthorId(authorId);
+    }
+
+    @Override
+    @Transactional
     public void deleteByEntity(String entityId, EntityType entityType) {
         commentRepository.deleteByEntityIdAndEntityType(entityId, entityType);
     }

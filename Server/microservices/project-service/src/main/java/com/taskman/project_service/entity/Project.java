@@ -35,6 +35,14 @@ public class Project {
     @Column(nullable = false)
     private ProjectStatus status;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer totalTasks = 0;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer completedTasks = 0;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<ProjectMembership> memberships = new ArrayList<>();

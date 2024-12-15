@@ -3,6 +3,7 @@ package com.taskman.project_service.dao.impl;
 import com.taskman.project_service.dao.interfaces.ProjectDao;
 import com.taskman.project_service.entity.Project;
 import com.taskman.project_service.entity.enums.ProjectStatus;
+import com.taskman.project_service.exception.ProjectNotFoundException;
 import com.taskman.project_service.repository.ProjectRepository;
 import org.springframework.stereotype.Repository;
 
@@ -41,5 +42,14 @@ public class ProjectDaoImpl extends BaseDaoImpl<Project, Long> implements Projec
     @Override
     public boolean existsByName(String name) {
         return projectRepository.existsByNameIgnoreCase(name);
+    }
+
+    @Override
+    public boolean areAllTasksCompleted(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+                
+        return project.getTotalTasks() > 0 && 
+               project.getTotalTasks().equals(project.getCompletedTasks());
     }
 }

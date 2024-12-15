@@ -97,6 +97,13 @@ public class ProjectController {
         String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
         return ResponseEntity.ok(projectService.addMemberToProject(projectId, userId, targetUserId, role));
     }
+    @GetMapping("/{projectId}/members")
+    public ResponseEntity<List<ProjectMembershipDTO>> getMembers(
+            @PathVariable Long projectId,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.getProjectMembers(projectId));
+    }
 
     @DeleteMapping("/{projectId}/members/{memberId}")
     public ResponseEntity<Void> removeMemberFromProject(
