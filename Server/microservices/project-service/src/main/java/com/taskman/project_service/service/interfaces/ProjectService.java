@@ -43,4 +43,7 @@ public interface ProjectService {
     // Helper method for internal use
     Project getProject(Long id);
     void updateProject(Project project);
+
+    //String getProjectOwner(Long taskId);
+
 }

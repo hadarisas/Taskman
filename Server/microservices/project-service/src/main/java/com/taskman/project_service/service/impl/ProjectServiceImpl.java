@@ -268,6 +268,14 @@ public class ProjectServiceImpl implements ProjectService {
     public void updateProject(Project project) {
         projectDao.save(project);
     }
+/*
+    @Override
+    public String getProjectOwner(Long projectId) {
+        Project project = projectDao.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        return project.getCreatedBy();
+    }
+    */
 
     // Helper methods
     private void updateProjectStatus(Project project) {

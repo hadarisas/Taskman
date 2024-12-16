@@ -86,4 +86,11 @@ public class TaskController {
         String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
         return ResponseEntity.ok(taskService.updateTaskStatus(taskId, status, userId));
     }
+
+    @GetMapping("/{taskId}/owner")
+    public ResponseEntity<String> getTaskOwner(@PathVariable Long taskId) {
+        String ownerId = taskService.getTaskOwner(taskId);
+        return ResponseEntity.ok(ownerId);
+    }
+
 } 

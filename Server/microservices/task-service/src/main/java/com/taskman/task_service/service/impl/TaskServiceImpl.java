@@ -259,6 +259,13 @@ public class TaskServiceImpl implements TaskService {
         return task.getCreatedBy().equals(userId) || isUserAssignedToTask(taskId, userId);
     }
 
+    @Override
+    public String getTaskOwner(Long taskId) {
+        Task task = taskDao.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        return task.getCreatedBy();
+    }
+
     private TaskDTO convertToDTO(Task task) {
         List<TaskAssignmentDTO> assignmentDTOs = task.getAssignments().stream()
                 .map(this::convertAssignmentToDTO)

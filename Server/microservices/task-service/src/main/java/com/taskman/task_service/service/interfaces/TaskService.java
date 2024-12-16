@@ -34,4 +34,7 @@ public interface TaskService {
     // Validation operations
     boolean isUserAssignedToTask(Long taskId, String userId);
     boolean canUserModifyTask(Long taskId, String userId);
-} 
+
+    String getTaskOwner(Long taskId);
+
+}

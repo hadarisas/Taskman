@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.HashMap;
 
 @Service
 public class JwtService {
@@ -37,6 +39,7 @@ public class JwtService {
 
     public String extractUserId(String token) {
         Claims claims = extractAllClaims(token);
+        // Convert Integer to String if needed
         Object userIdObj = claims.get("userId");
         if (userIdObj instanceof Integer) {
             return String.valueOf(userIdObj);
@@ -68,5 +71,19 @@ public class JwtService {
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
+
+    public String generateSystemToken() {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", List.of("ROLE_SYSTEM"));
+        claims.put("userId", "SYSTEM");
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject("system")
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
+                .signWith(getSigningKey())
+                .compact();
     }
 }

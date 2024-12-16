@@ -18,7 +18,7 @@ public enum NotificationType {
     // Comment related
     COMMENT_ADDED,
     COMMENT_REPLIED,
-    COMMENT_MENTIONED,
+    COMMENT_UPDATED,
     
     // User related
     USER_MENTIONED
