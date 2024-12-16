@@ -4,6 +4,7 @@ import com.taskman.task_service.dao.interfaces.TaskDao;
 import com.taskman.task_service.dao.interfaces.TaskAssignmentDao;
 import com.taskman.task_service.dto.TaskDTO;
 import com.taskman.task_service.dto.TaskAssignmentDTO;
+import com.taskman.task_service.dto.TaskNotificationRecipientsDto;
 import com.taskman.task_service.dto.request.CreateTaskRequest;
 import com.taskman.task_service.dto.request.UpdateTaskRequest;
 import com.taskman.task_service.entity.Task;
@@ -13,15 +14,18 @@ import com.taskman.task_service.exception.TaskAccessDeniedException;
 import com.taskman.task_service.exception.TaskNotFoundException;
 import com.taskman.task_service.exception.InvalidTaskAssignmentException;
 import com.taskman.task_service.kafka.event.TaskEvent;
+import com.taskman.task_service.security.JwtService;
 import com.taskman.task_service.service.interfaces.TaskService;
 import com.taskman.task_service.kafka.producer.TaskEventProducer;
+import com.taskman.task_service.dto.ProjectMembershipDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.taskman.task_service.client.ProjectServiceClient;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,9 @@ public class TaskServiceImpl implements TaskService {
     private final TaskDao taskDao;
     private final TaskAssignmentDao taskAssignmentDao;
     private final TaskEventProducer taskEventProducer;
+    private final JwtService jwtService;
+    private final ProjectServiceClient projectServiceClient;
+
 
     @Override
     public TaskDTO createTask(CreateTaskRequest request, String userId) {
@@ -265,6 +272,33 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
         return task.getCreatedBy();
     }
+
+    @Override
+    public TaskNotificationRecipientsDto getTaskNotificationRecipients(Long taskId) {
+        Task task = taskDao.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        // Get assignee IDs from task assignments
+        List<String> assigneeIds = task.getAssignments().stream()
+                .map(TaskAssignment::getUserId)
+                .collect(Collectors.toList());
+
+        String token = "Bearer " + jwtService.generateSystemToken();
+
+        // Get project admins through project service client
+        List<String> projectAdmins = projectServiceClient.getProjectMembers(task.getProjectId(), token)
+                .getBody()
+                .stream()
+                .filter(member -> member.getRole().equals("ADMIN"))
+                .map(ProjectMembershipDto::getUserId)
+                .collect(Collectors.toList());
+
+        return TaskNotificationRecipientsDto.builder()
+                .assigneeIds(assigneeIds)  // Changed from assigneeId to assigneeIds since a task can have multiple assignees
+                .projectAdminIds(projectAdmins)
+                .build();
+    }
+
 
     private TaskDTO convertToDTO(Task task) {
         List<TaskAssignmentDTO> assignmentDTOs = task.getAssignments().stream()

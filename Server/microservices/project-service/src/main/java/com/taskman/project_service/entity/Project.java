@@ -38,7 +38,7 @@ public class Project {
     @Column(nullable = false)
     @Builder.Default
     private Integer totalTasks = 0;
-    
+
     @Column(nullable = false)
     @Builder.Default
     private Integer completedTasks = 0;
@@ -46,4 +46,12 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<ProjectMembership> memberships = new ArrayList<>();
+
+    public void addMembership(ProjectMembership membership) {
+        if (memberships == null) {
+            memberships = new ArrayList<>();
+        }
+        memberships.add(membership);
+        membership.setProject(this);
+    }
 }

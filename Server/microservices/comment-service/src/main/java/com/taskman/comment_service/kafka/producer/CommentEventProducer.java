@@ -3,6 +3,7 @@ package com.taskman.comment_service.kafka.producer;
 import com.taskman.comment_service.client.ProjectServiceClient;
 import com.taskman.comment_service.client.TaskServiceClient;
 import com.taskman.comment_service.dao.interfaces.CommentDao;
+import com.taskman.comment_service.dto.TaskNotificationRecipientsDto;
 import com.taskman.comment_service.entity.Comment;
 import com.taskman.comment_service.entity.enums.EntityType;
 import com.taskman.comment_service.kafka.event.CommentEvent;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -34,11 +36,23 @@ public class CommentEventProducer {
     private List<String> getEntityOwners(String entityId, EntityType entityType, String token) {
         try {
             if (entityType == EntityType.TASK) {
-                String taskOwner = taskServiceClient.getTaskOwner(Long.parseLong(entityId), token)
+                TaskNotificationRecipientsDto recipients = taskServiceClient
+                        .getTaskNotificationRecipients(Long.parseLong(entityId), token)
                         .getBody();
-                return List.of(taskOwner);
+
+                // Combining assignee and project admins into one list
+                List<String> notificationRecipients = new ArrayList<>();
+                if (recipients.getAssigneeId() != null) {
+                    notificationRecipients.add(recipients.getAssigneeId());
+                }
+                if (recipients.getProjectAdminIds() != null) {
+                    notificationRecipients.addAll(recipients.getProjectAdminIds());
+                }
+                return notificationRecipients;
+
             } else if (entityType == EntityType.PROJECT) {
-                List<ProjectMembershipDto> members = projectServiceClient.getProjectMembers(entityId, token)
+                List<ProjectMembershipDto> members = projectServiceClient
+                        .getProjectMembers(entityId, token)
                         .getBody();
                 return members.stream()
                         .map(ProjectMembershipDto::getUserId)
@@ -46,7 +60,8 @@ public class CommentEventProducer {
             }
             return List.of();
         } catch (Exception e) {
-            log.error("Error getting entity owners for {} of type {}: {}", entityId, entityType, e.getMessage());
+            log.error("Error getting entity owners for {} of type {}: {}",
+                    entityId, entityType, e.getMessage());
             throw new RuntimeException("Failed to get entity owners", e);
         }
     }

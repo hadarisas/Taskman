@@ -2,6 +2,7 @@ package com.taskman.task_service.service.interfaces;
 
 import com.taskman.task_service.dto.TaskDTO;
 import com.taskman.task_service.dto.TaskAssignmentDTO;
+import com.taskman.task_service.dto.TaskNotificationRecipientsDto;
 import com.taskman.task_service.dto.request.CreateTaskRequest;
 import com.taskman.task_service.dto.request.UpdateTaskRequest;
 import com.taskman.task_service.entity.enums.TaskStatus;
@@ -36,5 +37,6 @@ public interface TaskService {
     boolean canUserModifyTask(Long taskId, String userId);
 
     String getTaskOwner(Long taskId);
+    TaskNotificationRecipientsDto getTaskNotificationRecipients(Long taskId);
 
 }

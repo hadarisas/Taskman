@@ -14,4 +14,5 @@ public class UserEvent {
     private String userId;
     private String username;
     private String email;
-} 
+}
+

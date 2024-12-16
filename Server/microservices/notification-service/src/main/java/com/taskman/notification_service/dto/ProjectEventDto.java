@@ -1,9 +1,10 @@
-package com.taskman.project_service.kafka.event;
+package com.taskman.notification_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.Date;
 import java.util.List;
 
@@ -11,17 +12,18 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectEvent {
-    private String eventType;  // PROJECT_CREATED, PROJECT_UPDATED, PROJECT_COMPLETED, PROJECT_OVERDUE, PROJECT_DEADLINE_APPROACHING, PROJECT_MEMBER_ASSIGNED
+public class ProjectEventDto {
+    private String eventType;
     private String projectId;
     private String projectName;
     private String description;
     private String managerId;
-    private String userId;     // For USER_ASSIGNED events
+    private String userId;     // For member assignment events
     private String status;
     private List<String> adminIds;
-    private List<String> memberIds;  
+    private List<String> memberIds;  // For all-member notifications
     private Date endDate;
     private String updateType;  // ADMINISTRATIVE or GENERAL
     private String role;
+
 }

@@ -41,6 +41,8 @@ public class CommentEventConsumer {
         String content;
         List<String> recipientIds;
 
+
+
         if (event.getParentCommentId() != null && event.getParentCommentAuthorId() != null) {
             content = "Someone replied to your comment: " + truncateContent(event.getContent());
             recipientIds = List.of(event.getParentCommentAuthorId());
@@ -49,6 +51,7 @@ public class CommentEventConsumer {
                     truncateContent(event.getContent());
             recipientIds = event.getEntityOwners();
         }
+
 
         for (String recipientId : recipientIds) {
             if (!recipientId.equals(event.getAuthorId())) {

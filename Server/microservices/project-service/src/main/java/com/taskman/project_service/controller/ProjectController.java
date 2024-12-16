@@ -6,6 +6,7 @@ import com.taskman.project_service.dto.request.CreateProjectRequest;
 import com.taskman.project_service.dto.request.UpdateProjectRequest;
 import com.taskman.project_service.entity.enums.MemberRole;
 import com.taskman.project_service.entity.enums.ProjectStatus;
+import com.taskman.project_service.kafka.producer.ProjectEventProducer;
 import com.taskman.project_service.security.JwtService;
 import com.taskman.project_service.service.interfaces.ProjectService;
 import jakarta.validation.Valid;
@@ -21,10 +22,13 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final JwtService jwtService;
+    private final ProjectEventProducer projectEventProducer;
 
-    public ProjectController(ProjectService projectService, JwtService jwtService) {
+
+    public ProjectController(ProjectService projectService, JwtService jwtService, ProjectEventProducer projectEventProducer) {
         this.projectService = projectService;
         this.jwtService = jwtService;
+        this.projectEventProducer = projectEventProducer;
     }
 
     @PostMapping
@@ -119,4 +123,11 @@ public class ProjectController {
     public ResponseEntity<Boolean> checkNameExists(@RequestParam String name) {
         return ResponseEntity.ok(projectService.existsByName(name));
     }
+
+    @PostMapping("/test/deadline-notifications")
+    public ResponseEntity<String> testDeadlineNotifications() {
+        projectEventProducer.checkProjectDeadlines();
+        return ResponseEntity.ok("Deadline notifications check triggered");
+    }
+
 }

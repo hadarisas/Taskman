@@ -9,17 +9,14 @@ public enum NotificationType {
     TASK_DUE_SOON,
     
     // Project related
-    PROJECT_CREATED,
     PROJECT_MEMBER_ADDED,
     PROJECT_UPDATED,
     PROJECT_COMPLETED,
-    PROJECT_DELETED,
+    PROJECT_OVERDUE,
+    PROJECT_DEADLINE_APPROACHING,
+    PROJECT_MEMBER_ROLE_UPDATED,
     
     // Comment related
     COMMENT_ADDED,
-    COMMENT_REPLIED,
     COMMENT_UPDATED,
-    
-    // User related
-    USER_MENTIONED
 } 

@@ -91,13 +91,15 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ProjectAccessDeniedException(userId, id);
         }
 
+        boolean wasCompleted = ProjectStatus.COMPLETED.equals(request.getStatus())
+                && !ProjectStatus.COMPLETED.equals(project.getStatus());
+
         if (request.getName() != null && !request.getName().equals(project.getName())) {
             if (existsByName(request.getName())) {
                 throw new ProjectNameAlreadyExistsException(request.getName());
             }
             project.setName(request.getName());
         }
-
         if (request.getDescription() != null) {
             project.setDescription(request.getDescription());
         }
@@ -112,6 +114,14 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project updatedProject = projectDao.save(project);
+
+        // Send appropriate event based on status change
+        if (wasCompleted) {
+            sendProjectCompletedEvent(updatedProject);
+        } else {
+            sendProjectUpdateEvent(updatedProject);
+        }
+
         return convertToDTO(updatedProject);
     }
 
@@ -176,6 +186,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
 
         ProjectMembership savedMembership = membershipDao.save(membership);
+        projectEventProducer.sendMemberAssignedEvent(project, targetUserId);
         return convertMembershipToDTO(savedMembership);
     }
 
@@ -189,8 +200,24 @@ public class ProjectServiceImpl implements ProjectService {
         ProjectMembership membership = membershipDao.findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ProjectAccessDeniedException(userId, projectId));
 
+        MemberRole oldRole = membership.getRole();
         membership.setRole(newRole);
         ProjectMembership updatedMembership = membershipDao.save(membership);
+
+        // Only send event if role actually changed
+        if (!oldRole.equals(newRole)) {
+            Project project = membership.getProject();
+            ProjectEvent event = ProjectEvent.builder()
+                    .eventType("PROJECT_MEMBER_ROLE_UPDATED")
+                    .projectId(project.getId().toString())
+                    .projectName(project.getName())
+                    .userId(userId)
+                    .role(newRole.toString())
+                    .build();
+
+            projectEventProducer.sendProjectEvent(event);
+        }
+
         return convertMembershipToDTO(updatedMembership);
     }
 
@@ -216,14 +243,14 @@ public class ProjectServiceImpl implements ProjectService {
     public void handleTaskCreated(TaskEvent event) {
         Project project = getProject(Long.valueOf(event.getProjectId()));
         project.setTotalTasks(project.getTotalTasks() + 1);
-        
+
         if (ProjectStatus.NOT_STARTED.equals(project.getStatus())) {
             project.setStatus(ProjectStatus.IN_PROGRESS);
-            
+
             // Send project status update event
             sendProjectStatusUpdateEvent(project);
         }
-        
+
         updateProject(project);
     }
 
@@ -232,14 +259,14 @@ public class ProjectServiceImpl implements ProjectService {
     public void handleTaskCompleted(TaskEvent event) {
         Project project = getProject(Long.valueOf(event.getProjectId()));
         project.setCompletedTasks(project.getCompletedTasks() + 1);
-        
+
         if (project.getCompletedTasks().equals(project.getTotalTasks())) {
             project.setStatus(ProjectStatus.COMPLETED);
-            
+
             // Send project completed event
             sendProjectStatusUpdateEvent(project);
         }
-        
+
         updateProject(project);
     }
 
@@ -248,11 +275,11 @@ public class ProjectServiceImpl implements ProjectService {
     public void handleTaskDeleted(TaskEvent event) {
         Project project = getProject(Long.valueOf(event.getProjectId()));
         project.setTotalTasks(project.getTotalTasks() - 1);
-        
+
         if ("COMPLETED".equals(event.getEventType())) {
             project.setCompletedTasks(project.getCompletedTasks() - 1);
         }
-        
+
         updateProjectStatus(project);
         updateProject(project);
     }
@@ -268,20 +295,13 @@ public class ProjectServiceImpl implements ProjectService {
     public void updateProject(Project project) {
         projectDao.save(project);
     }
-/*
-    @Override
-    public String getProjectOwner(Long projectId) {
-        Project project = projectDao.findById(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException(projectId));
-        return project.getCreatedBy();
-    }
-    */
+
 
     // Helper methods
     private void updateProjectStatus(Project project) {
         ProjectStatus oldStatus = project.getStatus();
         ProjectStatus newStatus;
-        
+
         if (project.getTotalTasks() == 0) {
             newStatus = ProjectStatus.NOT_STARTED;
         } else if (project.getCompletedTasks().equals(project.getTotalTasks())) {
@@ -289,7 +309,7 @@ public class ProjectServiceImpl implements ProjectService {
         } else {
             newStatus = ProjectStatus.IN_PROGRESS;
         }
-        
+
         if (oldStatus != newStatus) {
             project.setStatus(newStatus);
             sendProjectStatusUpdateEvent(project);
@@ -304,8 +324,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElse(null);
 
         ProjectEvent event = ProjectEvent.builder()
-                .eventType(ProjectStatus.COMPLETED.equals(project.getStatus()) 
-                        ? "PROJECT_COMPLETED" 
+                .eventType(ProjectStatus.COMPLETED.equals(project.getStatus())
+                        ? "PROJECT_COMPLETED"
                         : "PROJECT_UPDATED")
                 .projectId(String.valueOf(project.getId()))
                 .projectName(project.getName())
@@ -346,5 +366,37 @@ public class ProjectServiceImpl implements ProjectService {
                 .role(membership.getRole())
                 .joinedAt(membership.getJoinedAt())
                 .build();
+    }
+
+    private void sendProjectCompletedEvent(Project project) {
+        List<String> memberIds = project.getMemberships().stream()
+                .map(ProjectMembership::getUserId)
+                .collect(Collectors.toList());
+
+        ProjectEvent event = ProjectEvent.builder()
+                .eventType("PROJECT_COMPLETED")
+                .projectId(project.getId().toString())
+                .projectName(project.getName())
+                .status(project.getStatus().toString())
+                .memberIds(memberIds)
+                .build();
+
+        projectEventProducer.sendProjectEvent(event);
+    }
+
+    private void sendProjectUpdateEvent(Project project) {
+        List<String> memberIds = project.getMemberships().stream()
+                .map(ProjectMembership::getUserId)
+                .collect(Collectors.toList());
+
+        ProjectEvent event = ProjectEvent.builder()
+                .eventType("PROJECT_UPDATED")
+                .projectId(project.getId().toString())
+                .projectName(project.getName())
+                .status(project.getStatus().toString())
+                .memberIds(memberIds)
+                .build();
+
+        projectEventProducer.sendProjectEvent(event);
     }
 }

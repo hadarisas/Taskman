@@ -13,4 +13,5 @@ public interface ProjectDao extends BaseDao<Project, Long> {
     List<Project> findByStatusAndUserId(ProjectStatus status, String userId);
     boolean existsByName(String name);
     boolean areAllTasksCompleted(Long projectId);
+
 }

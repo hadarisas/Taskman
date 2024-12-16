@@ -1,6 +1,7 @@
 package com.taskman.task_service.controller;
 
 import com.taskman.task_service.dto.TaskDTO;
+import com.taskman.task_service.dto.TaskNotificationRecipientsDto;
 import com.taskman.task_service.dto.request.CreateTaskRequest;
 import com.taskman.task_service.dto.request.UpdateTaskRequest;
 import com.taskman.task_service.entity.enums.TaskStatus;
@@ -91,6 +92,11 @@ public class TaskController {
     public ResponseEntity<String> getTaskOwner(@PathVariable Long taskId) {
         String ownerId = taskService.getTaskOwner(taskId);
         return ResponseEntity.ok(ownerId);
+    }
+    @GetMapping("/{taskId}/notification-recipients")
+    public ResponseEntity<TaskNotificationRecipientsDto> getTaskNotificationRecipients(@PathVariable Long taskId) {
+        TaskNotificationRecipientsDto recipients = taskService.getTaskNotificationRecipients(taskId);
+        return ResponseEntity.ok(recipients);
     }
 
 } 
