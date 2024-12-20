@@ -229,6 +229,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<String> getProjectAdmins(Long projectId) {
+        Project project = projectDao.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+
+        return project.getMemberships().stream()
+                .filter(membership -> MemberRole.ADMIN.equals(membership.getRole()))
+                .map(ProjectMembership::getUserId)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public boolean isUserInProject(Long projectId, String userId) {
         return membershipDao.existsByProjectIdAndUserId(projectId, userId);
     }

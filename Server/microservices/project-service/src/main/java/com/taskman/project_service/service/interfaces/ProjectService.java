@@ -30,6 +30,7 @@ public interface ProjectService {
     void removeMemberFromProject(Long projectId, String userId);
     ProjectMembershipDTO updateMemberRole(Long projectId, String userId, MemberRole newRole);
     List<ProjectMembershipDTO> getProjectMembers(Long projectId);
+    List<String> getProjectAdmins(Long projectId);
 
     // Validation operations
     boolean isUserInProject(Long projectId, String userId);

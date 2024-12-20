@@ -2,6 +2,7 @@ package com.taskman.notification_service.config;
 
 import com.taskman.notification_service.dto.CommentEventDto;
 import com.taskman.notification_service.dto.ProjectEventDto;
+import com.taskman.notification_service.dto.TaskEventDto;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,8 +25,7 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
 
-    @Bean
-    public ConsumerFactory<String, CommentEventDto> commentEventConsumerFactory() {
+    private Map<String, Object> getCommonConsumerConfig() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -33,9 +33,17 @@ public class KafkaConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        return props;
+    }
 
+
+
+
+
+    @Bean
+    public ConsumerFactory<String, CommentEventDto> commentEventConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(
-                props,
+                getCommonConsumerConfig(),
                 new StringDeserializer(),
                 new JsonDeserializer<>(CommentEventDto.class, false)
         );
@@ -50,17 +58,26 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ConsumerFactory<String, ProjectEventDto> projectEventConsumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-
+    public ConsumerFactory<String, TaskEventDto> taskEventConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(
-                props,
+                getCommonConsumerConfig(),
+                new StringDeserializer(),
+                new JsonDeserializer<>(TaskEventDto.class, false)
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, TaskEventDto> taskKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, TaskEventDto> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(taskEventConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, ProjectEventDto> projectEventConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(
+                getCommonConsumerConfig(),
                 new StringDeserializer(),
                 new JsonDeserializer<>(ProjectEventDto.class, false)
         );
@@ -74,7 +91,6 @@ public class KafkaConfig {
         return factory;
     }
 
-    // For string messages (if needed)
     @Bean
     public ConsumerFactory<String, String> stringConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
@@ -92,4 +108,4 @@ public class KafkaConfig {
         factory.setConsumerFactory(stringConsumerFactory());
         return factory;
     }
-} 
+}

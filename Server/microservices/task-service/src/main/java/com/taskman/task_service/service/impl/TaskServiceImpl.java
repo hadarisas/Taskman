@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.taskman.task_service.client.ProjectServiceClient;
 
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -37,7 +36,6 @@ public class TaskServiceImpl implements TaskService {
     private final TaskEventProducer taskEventProducer;
     private final JwtService jwtService;
     private final ProjectServiceClient projectServiceClient;
-
 
     @Override
     public TaskDTO createTask(CreateTaskRequest request, String userId) {
@@ -53,14 +51,12 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         Task savedTask = taskDao.save(task);
-        
-        TaskEvent event = TaskEvent.builder()
-                .taskId(savedTask.getId().toString())
-                .taskTitle(savedTask.getTitle())
-                .projectId(savedTask.getProjectId())
-                .description(savedTask.getDescription())
-                .build();
-        taskEventProducer.sendTaskCreatedEvent(event);
+
+        // Get project admins for notifications
+        String token = "Bearer " + jwtService.generateSystemToken();
+
+        List<String> projectAdmins = projectServiceClient.getProjectAdmins(savedTask.getProjectId(), token);
+        taskEventProducer.sendTaskAssignedEvent(savedTask, userId);
 
         return convertToDTO(savedTask);
     }
@@ -89,7 +85,7 @@ public class TaskServiceImpl implements TaskService {
         }
 
         boolean hasChanges = false;
-        
+
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
             hasChanges = true;
@@ -116,15 +112,9 @@ public class TaskServiceImpl implements TaskService {
         }
 
         Task updatedTask = taskDao.save(task);
-        
+
         if (hasChanges) {
-            TaskEvent event = TaskEvent.builder()
-                    .taskId(updatedTask.getId().toString())
-                    .taskTitle(updatedTask.getTitle())
-                    .projectId(updatedTask.getProjectId())
-                    .description(updatedTask.getDescription())
-                    .build();
-            taskEventProducer.sendTaskUpdatedEvent(event);
+            taskEventProducer.sendTaskUpdatedEvent(updatedTask);
         }
 
         return convertToDTO(updatedTask);
@@ -194,16 +184,7 @@ public class TaskServiceImpl implements TaskService {
                 .build();
 
         TaskAssignment savedAssignment = taskAssignmentDao.save(assignment);
-
-        TaskEvent event = TaskEvent.builder()
-                .taskId(task.getId().toString())
-                .taskTitle(task.getTitle())
-                .assigneeId(assigneeId)
-                .assignerId(assignerId)
-                .projectId(task.getProjectId())
-                .description(task.getDescription())
-                .build();
-        taskEventProducer.sendTaskAssignedEvent(event);
+        taskEventProducer.sendTaskAssignedEvent(task, assigneeId);
 
         return convertAssignmentToDTO(savedAssignment);
     }
@@ -241,14 +222,7 @@ public class TaskServiceImpl implements TaskService {
         Task updatedTask = taskDao.save(task);
 
         if (newStatus == TaskStatus.DONE) {
-            TaskEvent event = TaskEvent.builder()
-                    .taskId(task.getId().toString())
-                    .taskTitle(task.getTitle())
-                    .assigneeId(userId)
-                    .projectId(task.getProjectId())
-                    .description(task.getDescription())
-                    .build();
-            taskEventProducer.sendTaskCompletedEvent(event);
+            taskEventProducer.sendTaskCompletedEvent(updatedTask);
         }
 
         return convertToDTO(updatedTask);
@@ -286,18 +260,14 @@ public class TaskServiceImpl implements TaskService {
         String token = "Bearer " + jwtService.generateSystemToken();
 
         // Get project admins through project service client
-        List<String> projectAdmins = projectServiceClient.getProjectMembers(task.getProjectId(), token)
-                .getBody()
-                .stream()
-                .filter(member -> member.getRole().equals("ADMIN"))
-                .map(ProjectMembershipDto::getUserId)
-                .collect(Collectors.toList());
+        List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);
 
         return TaskNotificationRecipientsDto.builder()
                 .assigneeIds(assigneeIds)  // Changed from assigneeId to assigneeIds since a task can have multiple assignees
                 .projectAdminIds(projectAdmins)
                 .build();
     }
+
 
 
     private TaskDTO convertToDTO(Task task) {
@@ -330,4 +300,4 @@ public class TaskServiceImpl implements TaskService {
                 .assignedBy(assignment.getAssignedBy())
                 .build();
     }
-} 
+}

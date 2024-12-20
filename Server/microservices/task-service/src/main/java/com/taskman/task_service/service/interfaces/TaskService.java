@@ -28,10 +28,10 @@ public interface TaskService {
     TaskAssignmentDTO assignTask(Long taskId, String assignerId, String assigneeId);
     void unassignTask(Long taskId, String userId, String assigneeId);
     List<TaskAssignmentDTO> getTaskAssignments(Long taskId);
-    
+
     // Task status operations
     TaskDTO updateTaskStatus(Long taskId, TaskStatus newStatus, String userId);
-    
+
     // Validation operations
     boolean isUserAssignedToTask(Long taskId, String userId);
     boolean canUserModifyTask(Long taskId, String userId);

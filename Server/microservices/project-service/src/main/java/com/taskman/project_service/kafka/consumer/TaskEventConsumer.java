@@ -17,18 +17,19 @@ public class TaskEventConsumer {
     private final ProjectService projectService;
 
     @KafkaListener(
-            topics = "${spring.kafka.topic.name}",
-            groupId = "${spring.kafka.consumer.group-id}"
+            topics = "${spring.kafka.topic.task-events}",
+            containerFactory = "taskKafkaListenerContainerFactory"
     )
     public void consume(TaskEvent event) {
         log.info("Task event received => {}", event.toString());
-
+        /*
         switch (event.getEventType()) {
             case "TASK_CREATED" -> handleTaskCreated(event);
             case "TASK_COMPLETED" -> handleTaskCompleted(event);
             case "TASK_DELETED" -> handleTaskDeleted(event);
             default -> log.warn("Unhandled event type: {}", event.getEventType());
         }
+        */
     }
 
     private void handleTaskCreated(TaskEvent event) {

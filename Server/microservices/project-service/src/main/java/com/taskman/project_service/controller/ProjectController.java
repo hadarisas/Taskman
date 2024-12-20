@@ -25,6 +25,7 @@ public class ProjectController {
     private final ProjectEventProducer projectEventProducer;
 
 
+
     public ProjectController(ProjectService projectService, JwtService jwtService, ProjectEventProducer projectEventProducer) {
         this.projectService = projectService;
         this.jwtService = jwtService;
@@ -109,6 +110,15 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getProjectMembers(projectId));
     }
 
+    @GetMapping("/{projectId}/admins")
+    public ResponseEntity<List<String>> getProjectAdmins(
+            @PathVariable Long projectId,
+            @RequestHeader("Authorization") String token) {
+        String userId = jwtService.extractUserId(token.replace("Bearer ", ""));
+        return ResponseEntity.ok(projectService.getProjectAdmins(projectId));
+
+    }
+
     @DeleteMapping("/{projectId}/members/{memberId}")
     public ResponseEntity<Void> removeMemberFromProject(
             @PathVariable Long projectId,
@@ -118,6 +128,7 @@ public class ProjectController {
         projectService.removeMemberFromProject(projectId, memberId);
         return ResponseEntity.noContent().build();
     }
+
 
     @GetMapping("/check-name")
     public ResponseEntity<Boolean> checkNameExists(@RequestParam String name) {

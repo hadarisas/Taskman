@@ -1,4 +1,5 @@
-package com.taskman.task_service.kafka.event;
+package com.taskman.project_service.dto;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskEvent {
+public class TaskEventDto {
     private String eventType;    // TASK_ASSIGNED, TASK_UPDATED, TASK_COMPLETED, TASK_OVERDUE, TASK_DEADLINE_APPROACHING
     private String taskId;
     private String taskTitle;
@@ -30,4 +31,4 @@ public class TaskEvent {
     private List<String> adminIds;     // Project admins to notify
 
     private String message;      // custom message for the notification
-} 
+}

@@ -7,7 +7,7 @@ public enum NotificationType {
     TASK_UPDATED,
     TASK_COMPLETED,
     TASK_DUE_SOON,
-    
+    TASK_OVERDUE,
     // Project related
     PROJECT_MEMBER_ADDED,
     PROJECT_UPDATED,

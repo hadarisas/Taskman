@@ -1,15 +1,16 @@
 package com.taskman.notification_service.kafka.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.taskman.notification_service.dto.TaskEventDto;
 import com.taskman.notification_service.dto.request.CreateNotificationRequest;
 import com.taskman.notification_service.entity.enums.EntityType;
 import com.taskman.notification_service.entity.enums.NotificationType;
-import com.taskman.notification_service.kafka.event.TaskEvent;
 import com.taskman.notification_service.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -17,12 +18,13 @@ import org.springframework.stereotype.Component;
 public class TaskEventConsumer {
 
     private final NotificationService notificationService;
-    private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "${spring.kafka.topic.task-events}")
-    public void handleTaskEvent(String eventJson) {
+    @KafkaListener(
+            topics = "${spring.kafka.topic.task-events}",
+            containerFactory = "taskKafkaListenerContainerFactory"
+    )
+    public void handleTaskEvent(TaskEventDto event) {
         try {
-            TaskEvent event = objectMapper.readValue(eventJson, TaskEvent.class);
             log.info("Received task event: {}", event);
 
             switch (event.getEventType()) {
@@ -30,71 +32,112 @@ public class TaskEventConsumer {
                 case "TASK_ASSIGNED" -> handleTaskAssigned(event);
                 case "TASK_UPDATED" -> handleTaskUpdated(event);
                 case "TASK_COMPLETED" -> handleTaskCompleted(event);
-                case "TASK_DUE_SOON" -> handleTaskDueSoon(event);
+                case "TASK_OVERDUE" -> handleTaskOverdue(event);
+                case "TASK_DEADLINE_APPROACHING" -> handleTaskDeadlineApproaching(event);
                 default -> log.warn("Unknown task event type: {}", event.getEventType());
             }
         } catch (Exception e) {
-            log.error("Error processing task event: {}", eventJson, e);
+            log.error("Error processing task event: {}", event, e);
         }
     }
 
-    private void handleTaskCreated(TaskEvent event) {
-        CreateNotificationRequest request = CreateNotificationRequest.builder()
-                .type(NotificationType.TASK_CREATED)
-                .content("New task created: " + event.getTaskTitle())
-                .recipientId(event.getAssigneeId())
-                .entityId(event.getTaskId())
-                .entityType(EntityType.TASK)
-                .build();
+    private void handleTaskCreated(TaskEventDto event) {
+        String content = String.format("New task created: '%s' in project ID: %s",
+                event.getTaskTitle(), event.getProjectId());
 
-        notificationService.createNotification(request);
+        notifyAssignees(event, NotificationType.TASK_CREATED, content);
     }
 
-    private void handleTaskAssigned(TaskEvent event) {
+    private void handleTaskAssigned(TaskEventDto event) {
+        String content = String.format("You have been assigned to task '%s' by %s",
+                event.getTaskTitle(), event.getAssignerId());
+
+        System.out.println("Assigned: "+ event);
         CreateNotificationRequest request = CreateNotificationRequest.builder()
                 .type(NotificationType.TASK_ASSIGNED)
-                .content("You have been assigned to task: " + event.getTaskTitle())
+                .content(content)
                 .recipientId(event.getAssigneeId())
                 .entityId(event.getTaskId())
                 .entityType(EntityType.TASK)
                 .build();
 
+        log.info("Creating assignment notification for assignee {}: {}", event.getAssigneeId(), request);
         notificationService.createNotification(request);
     }
 
-    private void handleTaskUpdated(TaskEvent event) {
-        CreateNotificationRequest request = CreateNotificationRequest.builder()
-                .type(NotificationType.TASK_UPDATED)
-                .content("Task has been updated: " + event.getTaskTitle())
-                .recipientId(event.getAssigneeId())
-                .entityId(event.getTaskId())
-                .entityType(EntityType.TASK)
-                .build();
+    private void handleTaskUpdated(TaskEventDto event) {
+        String content = String.format("Task '%s' has been updated. Status: %s",
+                event.getTaskTitle(), event.getStatus());
 
-        notificationService.createNotification(request);
+        notifyAssignees(event, NotificationType.TASK_UPDATED, content);
     }
 
-    private void handleTaskCompleted(TaskEvent event) {
-        CreateNotificationRequest request = CreateNotificationRequest.builder()
-                .type(NotificationType.TASK_COMPLETED)
-                .content("Task completed: " + event.getTaskTitle())
-                .recipientId(event.getAssigneeId())
-                .entityId(event.getTaskId())
-                .entityType(EntityType.TASK)
-                .build();
+    private void handleTaskCompleted(TaskEventDto event) {
+        String content = String.format("Task '%s' has been marked as completed",
+                event.getTaskTitle());
 
-        notificationService.createNotification(request);
+        // Notify all assignees and project admins
+        List<String> allRecipients = event.getAssigneeIds();
+        allRecipients.addAll(event.getAdminIds());
+
+        for (String recipientId : allRecipients) {
+            CreateNotificationRequest request = CreateNotificationRequest.builder()
+                    .type(NotificationType.TASK_COMPLETED)
+                    .content(content)
+                    .recipientId(recipientId)
+                    .entityId(event.getTaskId())
+                    .entityType(EntityType.TASK)
+                    .build();
+
+            log.info("Creating completion notification for recipient {}: {}", recipientId, request);
+            notificationService.createNotification(request);
+        }
     }
 
-    private void handleTaskDueSoon(TaskEvent event) {
-        CreateNotificationRequest request = CreateNotificationRequest.builder()
-                .type(NotificationType.TASK_DUE_SOON)
-                .content("Task due soon: " + event.getTaskTitle())
-                .recipientId(event.getAssigneeId())
-                .entityId(event.getTaskId())
-                .entityType(EntityType.TASK)
-                .build();
+    private void handleTaskOverdue(TaskEventDto event) {
+        String content = String.format("Task '%s' is overdue! Due date was: %s",
+                event.getTaskTitle(), event.getDueDate());
 
-        notificationService.createNotification(request);
+        notifyAssigneesAndAdmins(event, NotificationType.TASK_OVERDUE, content);
     }
-} 
+
+    private void handleTaskDeadlineApproaching(TaskEventDto event) {
+        String content = String.format("Task '%s' deadline is approaching! Due date: %s",
+                event.getTaskTitle(), event.getDueDate());
+
+        notifyAssigneesAndAdmins(event, NotificationType.TASK_DUE_SOON, content);
+    }
+
+    private void notifyAssignees(TaskEventDto event, NotificationType type, String content) {
+        for (String assigneeId : event.getAssigneeIds()) {
+            CreateNotificationRequest request = CreateNotificationRequest.builder()
+                    .type(type)
+                    .content(content)
+                    .recipientId(assigneeId)
+                    .entityId(event.getTaskId())
+                    .entityType(EntityType.TASK)
+                    .build();
+
+            log.info("Creating notification for assignee {}: {}", assigneeId, request);
+            notificationService.createNotification(request);
+        }
+    }
+
+    private void notifyAssigneesAndAdmins(TaskEventDto event, NotificationType type, String content) {
+        List<String> allRecipients = event.getAssigneeIds();
+        allRecipients.addAll(event.getAdminIds());
+
+        for (String recipientId : allRecipients) {
+            CreateNotificationRequest request = CreateNotificationRequest.builder()
+                    .type(type)
+                    .content(content)
+                    .recipientId(recipientId)
+                    .entityId(event.getTaskId())
+                    .entityType(EntityType.TASK)
+                    .build();
+
+            log.info("Creating notification for recipient {}: {}", recipientId, request);
+            notificationService.createNotification(request);
+        }
+    }
+}

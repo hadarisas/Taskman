@@ -12,8 +12,15 @@ import java.util.List;
 
 @FeignClient(name = "${project-service.name}")
 public interface ProjectServiceClient {
+
     @GetMapping("/api/projects/{projectId}/members")
     ResponseEntity<List<ProjectMembershipDto>> getProjectMembers(
+            @PathVariable("projectId") String projectId,
+            @RequestHeader("Authorization") String token
+    );
+
+    @GetMapping("/api/projects/{projectId}/admins")
+    List<String> getProjectAdmins(
             @PathVariable("projectId") String projectId,
             @RequestHeader("Authorization") String token
     );

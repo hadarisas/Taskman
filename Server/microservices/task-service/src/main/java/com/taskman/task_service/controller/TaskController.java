@@ -41,7 +41,7 @@ public class TaskController {
             @RequestParam(required = false) String projectId,
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) String userId) {
-        
+
         if (projectId != null && status != null) {
             return ResponseEntity.ok(taskService.findTasksByProjectIdAndStatus(projectId, status));
         }
@@ -57,7 +57,7 @@ public class TaskController {
         if (userId != null) {
             return ResponseEntity.ok(taskService.findTasksByUserId(userId));
         }
-        
+
         return ResponseEntity.ok(taskService.getAllTasks());
     }
 
