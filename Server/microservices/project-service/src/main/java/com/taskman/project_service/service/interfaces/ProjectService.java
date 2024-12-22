@@ -2,6 +2,7 @@ package com.taskman.project_service.service.interfaces;
 
 import com.taskman.project_service.dto.ProjectDTO;
 import com.taskman.project_service.dto.ProjectMembershipDTO;
+import com.taskman.project_service.dto.TaskEventDto;
 import com.taskman.project_service.dto.request.CreateProjectRequest;
 import com.taskman.project_service.dto.request.UpdateProjectRequest;
 import com.taskman.project_service.entity.Project;
@@ -37,9 +38,9 @@ public interface ProjectService {
     boolean existsByName(String name);
 
     // Task event handling operations
-    void handleTaskCreated(TaskEvent event);
-    void handleTaskCompleted(TaskEvent event);
-    void handleTaskDeleted(TaskEvent event);
+    void handleTaskCreated(TaskEventDto event);
+    void handleTaskCompleted(TaskEventDto event);
+    void handleTaskDeleted(TaskEventDto event);
     
     // Helper method for internal use
     Project getProject(Long id);

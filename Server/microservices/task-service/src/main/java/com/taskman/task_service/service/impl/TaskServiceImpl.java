@@ -56,7 +56,7 @@ public class TaskServiceImpl implements TaskService {
         String token = "Bearer " + jwtService.generateSystemToken();
 
         List<String> projectAdmins = projectServiceClient.getProjectAdmins(savedTask.getProjectId(), token);
-        taskEventProducer.sendTaskAssignedEvent(savedTask, userId);
+        taskEventProducer.sendTaskCreatedEvent(savedTask);
 
         return convertToDTO(savedTask);
     }

@@ -22,7 +22,7 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    @Value("${spring.kafka.topic.name}")
+    @Value("${spring.kafka.topic.task-events}")
     private String taskTopicName;
 
     @Value("${spring.kafka.topic.project-events}")

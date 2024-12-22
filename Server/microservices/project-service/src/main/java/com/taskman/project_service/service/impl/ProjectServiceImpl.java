@@ -4,6 +4,7 @@ import com.taskman.project_service.dao.interfaces.ProjectDao;
 import com.taskman.project_service.dao.interfaces.ProjectMembershipDao;
 import com.taskman.project_service.dto.ProjectDTO;
 import com.taskman.project_service.dto.ProjectMembershipDTO;
+import com.taskman.project_service.dto.TaskEventDto;
 import com.taskman.project_service.dto.request.CreateProjectRequest;
 import com.taskman.project_service.dto.request.UpdateProjectRequest;
 import com.taskman.project_service.entity.Project;
@@ -252,7 +253,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public void handleTaskCreated(TaskEvent event) {
+    public void handleTaskCreated(TaskEventDto event) {
         Project project = getProject(Long.valueOf(event.getProjectId()));
         project.setTotalTasks(project.getTotalTasks() + 1);
 
@@ -268,7 +269,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public void handleTaskCompleted(TaskEvent event) {
+    public void handleTaskCompleted(TaskEventDto event) {
         Project project = getProject(Long.valueOf(event.getProjectId()));
         project.setCompletedTasks(project.getCompletedTasks() + 1);
 
@@ -284,7 +285,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public void handleTaskDeleted(TaskEvent event) {
+    public void handleTaskDeleted(TaskEventDto event) {
         Project project = getProject(Long.valueOf(event.getProjectId()));
         project.setTotalTasks(project.getTotalTasks() - 1);
 
@@ -368,6 +369,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .endDate(project.getEndDate())
                 .status(project.getStatus())
                 .memberships(membershipDTOs)
+                .completedTasks(project.getCompletedTasks())
+                .totalTasks(project.getTotalTasks())
                 .build();
     }
 
@@ -411,4 +414,6 @@ public class ProjectServiceImpl implements ProjectService {
 
         projectEventProducer.sendProjectEvent(event);
     }
+
+
 }

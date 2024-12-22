@@ -36,6 +36,36 @@ public class TaskEventProducer {
     @Value("${spring.kafka.topic.task-events}")
     private String topicName;
 
+
+    public void sendTaskCreatedEvent(Task task) {
+        try {
+            String token = "Bearer " + jwtService.generateSystemToken();
+
+            List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);
+
+            TaskEvent event = TaskEvent.builder()
+                    .eventType("TASK_CREATED")
+                    .taskId(task.getId().toString())
+                    .taskTitle(task.getTitle())
+                    .projectId(task.getProjectId())
+                    .description(task.getDescription())
+                    .status(task.getStatus().toString())
+                    .priority(task.getPriority().toString())
+                    .startDate(task.getStartDate())
+                    .dueDate(task.getDueDate())
+                    .timestamp(new Date())
+                    .assigneeId(task.getCreatedBy())
+                    .adminIds(projectAdmins)
+                    .build();
+
+            sendTaskEvent(event);
+            log.info("Task assignment event sent for task: {}, created by: {}", task.getId(), task.getCreatedBy());
+        } catch (Exception e) {
+            log.error("Error sending task assignment event: {}", e.getMessage(), e);
+        }
+    }
+
+
     public void sendTaskAssignedEvent(Task task, String assigneeId) {
         try {
             String token = "Bearer " + jwtService.generateSystemToken();
@@ -63,6 +93,7 @@ public class TaskEventProducer {
             log.error("Error sending task assignment event: {}", e.getMessage(), e);
         }
     }
+
 
     public void sendTaskUpdatedEvent(Task task) {
         try {
@@ -96,6 +127,7 @@ public class TaskEventProducer {
             log.error("Error sending task update event: {}", e.getMessage(), e);
         }
     }
+
 
     public void sendTaskCompletedEvent(Task task) {
         try {

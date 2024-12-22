@@ -12,6 +12,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,7 +57,15 @@ public class UserController {
 
     // Update
     @PutMapping("/{id}")
-    public UserDTO updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
+    public UserDTO updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Check if the user is an ADMIN or the owner of the account
+        if (!userDetails.getUsername().equals(userService.getUserById(id).getEmail()) &&
+                !userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to update this user.");
+        }
         return userService.updateUser(id, request);
     }
 
@@ -78,7 +90,14 @@ public class UserController {
     // Delete
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id) {
+    public void deleteUser(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        // Only ADMIN can delete users
+        if (!userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have permission to delete this user.");
+        }
         userService.deleteUser(id);
     }
 

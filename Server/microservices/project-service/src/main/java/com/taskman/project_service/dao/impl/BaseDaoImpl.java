@@ -54,4 +54,12 @@ public abstract class BaseDaoImpl<T, ID> implements BaseDao<T, ID> {
     public boolean existsById(ID id) {
         return findById(id).isPresent();
     }
+
+    @Override
+    public T saveAndFlush(T entity) {
+        T managedEntity = entityManager.merge(entity);
+        entityManager.flush();
+        return managedEntity;
+    }
+
 }

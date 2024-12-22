@@ -21,6 +21,8 @@ public class ProjectDTO {
     private Date startDate;
     private Date endDate;
     private ProjectStatus status;
+    private Integer totalTasks;
+    private Integer completedTasks;
 
     @Builder.Default
     private List<ProjectMembershipDTO> memberships = new ArrayList<>();
