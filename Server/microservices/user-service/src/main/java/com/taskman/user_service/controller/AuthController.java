@@ -2,7 +2,13 @@ package com.taskman.user_service.controller;
 
 import com.taskman.user_service.dto.request.AuthenticationRequest;
 import com.taskman.user_service.dto.response.AuthenticationResponse;
+import com.taskman.user_service.dto.response.UserResponse;
+import com.taskman.user_service.entity.User;
+import com.taskman.user_service.exception.AuthenticationFailedException;
+import com.taskman.user_service.exception.InvalidTokenException;
+import com.taskman.user_service.security.JwtService;
 import com.taskman.user_service.service.impl.AuthenticationService;
+import com.taskman.user_service.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.Cookie;
@@ -11,7 +17,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,7 +42,6 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "Refresh token", description = "Generates new access token using refresh token")
     @ApiResponse(responseCode = "200", description = "New access token generated")
     @ApiResponse(responseCode = "401", description = "Invalid refresh token")
     public ResponseEntity<AuthenticationResponse> refresh(
@@ -60,4 +70,9 @@ public class AuthController {
 
         return ResponseEntity.ok().build();
     }
-} 
+    @GetMapping("/check")
+    public ResponseEntity<UserResponse> checkAuth(HttpServletRequest request,
+                                                  HttpServletResponse response) {
+        return ResponseEntity.ok(authService.checkAuth(request, response));
+    }
+}

@@ -102,7 +102,6 @@ public class TeamController {
         );
         return ResponseEntity.ok(membership);
     }
-
     // Get team leaders 
     @GetMapping("/{teamId}/leaders")
     public ResponseEntity<List<UserDTO>> getTeamLeaders(@PathVariable Long teamId) {

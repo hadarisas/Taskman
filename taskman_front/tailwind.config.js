@@ -2,8 +2,9 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx}"
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -18,12 +19,19 @@ export default {
           700: '#0369a1',
           800: '#075985',
           900: '#0c4a6e',
+          950: '#082f49',
         },
-        secondary: {
-          // Add your secondary color palette
+        background: {
+          light: '#ffffff',
+          dark: '#1a1a1a',
+        },
+        foreground: {
+          light: '#000000',
+          dark: '#ffffff',
         }
-      }
-    }
+      },
+    },
   },
-  plugins: []
-} 
+  plugins: [],
+}
+

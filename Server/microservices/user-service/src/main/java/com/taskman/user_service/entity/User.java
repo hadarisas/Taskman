@@ -32,10 +32,11 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role;
+    private UserRole role = UserRole.USER;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean active = true;
+    
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

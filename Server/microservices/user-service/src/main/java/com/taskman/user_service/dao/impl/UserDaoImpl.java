@@ -38,4 +38,18 @@ public class UserDaoImpl extends BaseDaoImpl<User, Long> implements UserDao {
             return false;
         }
     }
+
+    @Override
+    public boolean existsByEmailAndIdNot(String email, Long id) {
+        try {
+            entityManager.createQuery(
+                            "SELECT 1 FROM User u WHERE u.email = :email AND u.id != :id", Integer.class)
+                    .setParameter("email", email)
+                    .setParameter("id", id)
+                    .getSingleResult();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

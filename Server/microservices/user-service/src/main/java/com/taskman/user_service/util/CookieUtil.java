@@ -13,7 +13,11 @@ public class CookieUtil {
         cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
+        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
+        String headerValue = String.format("%s=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None", 
+            name, value, maxAge);
+        response.addHeader("Set-Cookie", headerValue);
     }
 
     public void deleteCookie(HttpServletResponse response, String name) {
@@ -22,7 +26,10 @@ public class CookieUtil {
         cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setMaxAge(0);
+        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
+        String headerValue = String.format("%s=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=None", name);
+        response.addHeader("Set-Cookie", headerValue);
     }
 
     public String extractToken(HttpServletRequest request, String cookieName) {

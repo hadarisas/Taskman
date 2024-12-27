@@ -9,6 +9,7 @@ import com.taskman.notification_service.entity.Notification;
 import com.taskman.notification_service.entity.enums.EntityType;
 import com.taskman.notification_service.entity.enums.NotificationType;
 import com.taskman.notification_service.exception.NotificationNotFoundException;
+import com.taskman.notification_service.service.NotificationEmitterService;
 import com.taskman.notification_service.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationDao notificationDao;
+    private final NotificationEmitterService emitterService;
 
     @Override
     public NotificationResponse createNotification(CreateNotificationRequest request) {
@@ -36,7 +38,13 @@ public class NotificationServiceImpl implements NotificationService {
                 .entityType(request.getEntityType())
                 .build();
 
-        return toResponse(notificationDao.save(notification));
+        NotificationResponse response = toResponse(notificationDao.save(notification));
+        
+        if (emitterService.hasEmitter(request.getRecipientId())) {
+            emitterService.sendNotification(request.getRecipientId(), response);
+        }
+        
+        return response;
     }
 
     @Override

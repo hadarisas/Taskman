@@ -30,17 +30,19 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public UserDTO createUser(CreateUserRequest request) {
+        // Check if email already exists
         if (userDao.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists: " + request.getEmail());
+            throw new EmailAlreadyExistsException("Email is already taken");
         }
 
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.USER)
-                .active(true)
+                .role(request.getRole() != null ? request.getRole() : UserRole.USER)
+                .active(request.getActive() != null ? request.getActive() : true)
                 .build();
 
         User savedUser = userDao.save(user);
@@ -48,18 +50,37 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDTO updateUser(Long id, UpdateUserRequest request) {
         User user = userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
+        // Update basic information
         if (request.getName() != null) {
             user.setName(request.getName());
         }
+        
         if (request.getEmail() != null) {
-            if (existsByEmail(request.getEmail()) && !request.getEmail().equals(user.getEmail())) {
-                throw new EmailAlreadyExistsException("Email already exists: " + request.getEmail());
+            // Check if email is already taken by another user
+            if (userDao.existsByEmailAndIdNot(request.getEmail(), id)) {
+                throw new EmailAlreadyExistsException("Email is already taken");
             }
             user.setEmail(request.getEmail());
+        }
+        
+        // Update password if provided
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        
+        // Update role if provided (admin only)
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+        
+        // Update active status if provided (admin only)
+        if (request.getActive() != null) {
+            user.setActive(request.getActive());
         }
 
         User updatedUser = userDao.save(user);

@@ -62,10 +62,18 @@ public class UserController {
             @Valid @RequestBody UpdateUserRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         // Check if the user is an ADMIN or the owner of the account
-        if (!userDetails.getUsername().equals(userService.getUserById(id).getEmail()) &&
-                !userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+        boolean isAdmin = userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        boolean isOwner = userDetails.getUsername().equals(userService.getUserById(id).getEmail());
+        
+        // Only allow role and active status updates for admins
+        if (!isAdmin && !isOwner) {
             throw new AccessDeniedException("You do not have permission to update this user.");
         }
+        
+        if (!isAdmin && (request.getRole() != null || request.getActive() != null)) {
+            throw new AccessDeniedException("Only administrators can update role and active status.");
+        }
+        
         return userService.updateUser(id, request);
     }
 

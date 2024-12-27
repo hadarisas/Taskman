@@ -3,6 +3,7 @@ package com.taskman.user_service.service.impl;
 import com.taskman.user_service.dto.UserDTO;
 import com.taskman.user_service.dto.request.AuthenticationRequest;
 import com.taskman.user_service.dto.response.AuthenticationResponse;
+import com.taskman.user_service.dto.response.UserResponse;
 import com.taskman.user_service.entity.User;
 import com.taskman.user_service.exception.AuthenticationFailedException;
 import com.taskman.user_service.exception.InvalidTokenException;
@@ -13,10 +14,13 @@ import com.taskman.user_service.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +56,24 @@ public class AuthenticationService {
             throw new AuthenticationFailedException("Authentication failed: " + e.getMessage());
         }
     }
+    public UserResponse checkAuth(HttpServletRequest request, HttpServletResponse response) {
+        final String accessToken = cookieUtil.extractToken(request, "refresh_token");
+
+        String userEmail = jwtService.extractUsername(accessToken);
+        if (userEmail == null) {
+            throw new InvalidTokenException("Invalid refresh token");
+        }
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new AuthenticationFailedException("User not found"));
+
+        return UserResponse.builder()
+                .user(convertToDTO(user))
+                .authenticated(true)
+                .build();
+
+    }
+
     public AuthenticationResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
         final String refreshToken = cookieUtil.extractToken(request, "refresh_token");
         if (refreshToken == null) {
