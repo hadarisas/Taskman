@@ -4,7 +4,6 @@ import Avatar from '../components/Avatar';
 import { UserService } from '../services/UserService';
 import UserModal from '../components/users/UserModal';
 import { toast } from 'react-toastify';
-import Header from '../components/Header';
 import PageHeader from '../components/PageHeader';
 import SearchAndFilter from '../components/SearchAndFilter';
 import Pagination from '../components/Pagination';
@@ -45,7 +44,7 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const data = await UserService.getUsers();
+      const data = await UserService.getAllUsers();
       setUsers(data);
     } catch (error) {
       toast.error('Failed to fetch users');
@@ -141,8 +140,7 @@ const Users = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16">
         <PageHeader
           title="Users"
           description="A list of all users in your organization including their name, email, role and status."
