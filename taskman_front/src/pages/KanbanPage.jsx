@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  PlusIcon, 
-  PencilSquareIcon, 
-  TrashIcon 
-} from '@heroicons/react/24/outline';
-import KanbanBoard from '../components/kanban/KanbanBoard';
-import { TaskService } from '../services/TaskService';
-import { ProjectService } from '../services/ProjectService';
-import PageHeader from '../components/PageHeader';
-import LoadingSpinner from '../components/LoadingSpinner';
-import Button from '../components/Button';
-import TaskModal from '../components/tasks/TaskModal';
-import ProjectModal from '../components/projects/ProjectModal';
-import ConfirmDialog from '../components/ConfirmDialog';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import KanbanBoard from "../components/kanban/KanbanBoard";
+import { TaskService } from "../services/TaskService";
+import { ProjectService } from "../services/ProjectService";
+import PageHeader from "../components/common/PageHeader";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import Button from "../components/common/Button";
+import TaskModal from "../components/tasks/TaskModal";
+import ProjectModal from "../components/projects/ProjectModal";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 
 const KanbanPage = () => {
   const { projectId } = useParams();
@@ -34,12 +34,12 @@ const KanbanPage = () => {
     try {
       const [projectData, tasksData] = await Promise.all([
         ProjectService.getProjectById(projectId),
-        TaskService.getAllTasks(projectId)
+        TaskService.getAllTasks(projectId),
       ]);
       setProject(projectData);
       setTasks(tasksData);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +50,7 @@ const KanbanPage = () => {
       await TaskService.updateTaskStatus(taskId, newStatus);
       await fetchProjectAndTasks();
     } catch (error) {
-      console.error('Error updating task status:', error);
+      console.error("Error updating task status:", error);
     }
   };
 
@@ -60,24 +60,24 @@ const KanbanPage = () => {
       const taskDetails = await TaskService.getTaskById(task.id);
       setSelectedTask({
         ...taskDetails,
-        dueDate: taskDetails.dueDate ? taskDetails.dueDate.split('T')[0] : '',
+        dueDate: taskDetails.dueDate ? taskDetails.dueDate.split("T")[0] : "",
       });
       setIsTaskModalOpen(true);
     } catch (error) {
-      console.error('Error fetching task details:', error);
+      console.error("Error fetching task details:", error);
     }
   };
 
   const handleTaskCreate = async (taskData) => {
     try {
-      await TaskService.createTask({ 
-        ...taskData, 
-        projectId: parseInt(projectId, 10)
+      await TaskService.createTask({
+        ...taskData,
+        projectId: parseInt(projectId, 10),
       });
       await fetchProjectAndTasks();
       setIsTaskModalOpen(false);
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error("Error creating task:", error);
     }
   };
 
@@ -85,13 +85,13 @@ const KanbanPage = () => {
     try {
       await TaskService.updateTask(selectedTask.id, {
         ...taskData,
-        projectId: parseInt(projectId, 10)
+        projectId: parseInt(projectId, 10),
       });
       await fetchProjectAndTasks();
       setIsTaskModalOpen(false);
       setSelectedTask(null);
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error("Error updating task:", error);
     }
   };
 
@@ -101,16 +101,16 @@ const KanbanPage = () => {
       await fetchProjectAndTasks();
       setIsProjectModalOpen(false);
     } catch (error) {
-      console.error('Error updating project:', error);
+      console.error("Error updating project:", error);
     }
   };
 
   const handleProjectDelete = async () => {
     try {
       await ProjectService.deleteProject(projectId);
-      navigate('/projects');
+      navigate("/projects");
     } catch (error) {
-      console.error('Error deleting project:', error);
+      console.error("Error deleting project:", error);
     }
   };
 
@@ -121,7 +121,7 @@ const KanbanPage = () => {
   return (
     <div className="h-full flex flex-col">
       <PageHeader
-        title={project?.name || 'Project Tasks'}
+        title={project?.name || "Project Tasks"}
         description={project?.description}
       >
         <div className="flex space-x-2">
@@ -142,10 +142,7 @@ const KanbanPage = () => {
             <PencilSquareIcon className="h-5 w-5 mr-1" />
             Edit Project
           </Button>
-          <Button
-            variant="danger"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
+          <Button variant="danger" onClick={() => setIsDeleteDialogOpen(true)}>
             <TrashIcon className="h-5 w-5 mr-1" />
             Delete Project
           </Button>
@@ -189,4 +186,4 @@ const KanbanPage = () => {
   );
 };
 
-export default KanbanPage; 
+export default KanbanPage;

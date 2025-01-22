@@ -1,14 +1,14 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Menu } from '@headlessui/react';
-import { 
-  UserCircleIcon, 
-  Cog6ToothIcon, 
-  ArrowRightOnRectangleIcon 
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
-import ThemeToggle from './ThemeToggle';
-import Avatar from './Avatar';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Menu } from "@headlessui/react";
+import {
+  UserCircleIcon,
+  Cog6ToothIcon,
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../../contexts/AuthContext";
+import ThemeToggle from "../common/ThemeToggle";
+import Avatar from "../common/Avatar";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -17,9 +17,9 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error("Error logging out:", error);
     }
   };
 
@@ -36,25 +36,27 @@ const Header = () => {
             {/* User Menu */}
             <Menu as="div" className="relative">
               <Menu.Button className="flex items-center space-x-3 hover:opacity-80">
-                <Avatar 
-                  user={user} 
+                <Avatar
+                  user={user}
                   size="sm"
-                  className="ring-2 ring-white dark:ring-gray-800" 
+                  className="ring-2 ring-white dark:ring-gray-800"
                 />
                 <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200">
                   {user?.name}
                 </span>
               </Menu.Button>
 
-              <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 
+              <Menu.Items
+                className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 
                                   bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 
-                                  focus:outline-none">
+                                  focus:outline-none"
+              >
                 <Menu.Item>
                   {({ active }) => (
                     <button
-                      onClick={() => navigate('/profile')}
+                      onClick={() => navigate("/profile")}
                       className={`${
-                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                        active ? "bg-gray-100 dark:bg-gray-700" : ""
                       } flex w-full items-center px-4 py-2 text-sm text-gray-700 
                          dark:text-gray-200`}
                     >
@@ -67,9 +69,9 @@ const Header = () => {
                 <Menu.Item>
                   {({ active }) => (
                     <button
-                      onClick={() => navigate('/settings')}
+                      onClick={() => navigate("/settings")}
                       className={`${
-                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                        active ? "bg-gray-100 dark:bg-gray-700" : ""
                       } flex w-full items-center px-4 py-2 text-sm text-gray-700 
                          dark:text-gray-200`}
                     >
@@ -86,7 +88,7 @@ const Header = () => {
                     <button
                       onClick={handleLogout}
                       className={`${
-                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                        active ? "bg-gray-100 dark:bg-gray-700" : ""
                       } flex w-full items-center px-4 py-2 text-sm text-red-600 
                          dark:text-red-400`}
                     >
@@ -104,4 +106,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;

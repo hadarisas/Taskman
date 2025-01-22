@@ -5,6 +5,7 @@ import com.taskman.user_service.dto.TeamMembershipDTO;
 import com.taskman.user_service.dto.UserDTO;
 import com.taskman.user_service.dto.request.CreateTeamRequest;
 import com.taskman.user_service.dto.request.UpdateTeamRequest;
+import com.taskman.user_service.dto.request.AddTeamMemberRequest;
 import com.taskman.user_service.entity.enums.TeamRole;
 
 import java.util.List;
@@ -27,13 +28,17 @@ public interface TeamService {
 
     // Membership management
     TeamMembershipDTO addMemberToTeam(Long teamId, Long userId, TeamRole role);
-    void removeMemberFromTeam(Long teamId, Long userId);
+    boolean removeMemberFromTeam(Long teamId, Long userId);
     TeamMembershipDTO updateMemberRole(Long teamId, Long userId, TeamRole role);
 
     // Validation
     boolean isUserInTeam(Long teamId, Long userId);
     boolean existsByName(String name);
 
+
     // Team leaders
     List<UserDTO> getTeamLeaders(Long teamId);
+
+    // Add new method for batch member addition
+    List<TeamMembershipDTO> addMembersToTeam(Long teamId, List<AddTeamMemberRequest> members);
 }

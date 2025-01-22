@@ -7,13 +7,16 @@ import com.taskman.user_service.dto.request.AddTeamMemberRequest;
 import com.taskman.user_service.dto.request.CreateTeamRequest;
 import com.taskman.user_service.dto.request.UpdateTeamRequest;
 import com.taskman.user_service.dto.request.UpdateTeamMemberRoleRequest;
+import com.taskman.user_service.dto.request.AddTeamMembersRequest;
 import com.taskman.user_service.service.interfaces.TeamService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/teams")
@@ -70,9 +73,11 @@ public class TeamController {
 
     // Remove member from team
     @DeleteMapping("/{teamId}/members/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeMemberFromTeam(@PathVariable Long teamId, @PathVariable Long userId) {
-        teamService.removeMemberFromTeam(teamId, userId);
+    public ResponseEntity<Boolean> removeMemberFromTeam(
+            @PathVariable Long teamId,
+            @PathVariable Long userId) {
+        boolean isDeleted = teamService.removeMemberFromTeam(teamId, userId);
+        return ResponseEntity.ok(isDeleted);
     }
 
     // Update member role in team
@@ -92,6 +97,14 @@ public class TeamController {
 
     // Add member to team   
     @PostMapping("/{teamId}/members")
+    public ResponseEntity<List<TeamMembershipDTO>> addMembers(
+            @PathVariable Long teamId,
+            @Valid @RequestBody AddTeamMembersRequest request) {
+        List<TeamMembershipDTO> memberships = teamService.addMembersToTeam(teamId, request.getMembers());
+        return ResponseEntity.ok(memberships);
+    }
+
+    @PostMapping("/{teamId}/member")
     public ResponseEntity<TeamMembershipDTO> addMember(
             @PathVariable Long teamId,
             @Valid @RequestBody AddTeamMemberRequest request) {
@@ -102,6 +115,7 @@ public class TeamController {
         );
         return ResponseEntity.ok(membership);
     }
+
     // Get team leaders 
     @GetMapping("/{teamId}/leaders")
     public ResponseEntity<List<UserDTO>> getTeamLeaders(@PathVariable Long teamId) {

@@ -1,23 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import Avatar from '../components/Avatar';
-import { UserService } from '../services/UserService';
-import UserModal from '../components/users/UserModal';
-import { toast } from 'react-toastify';
-import PageHeader from '../components/PageHeader';
-import SearchAndFilter from '../components/SearchAndFilter';
-import Pagination from '../components/Pagination';
-import ConfirmationModal from '../components/ConfirmationModal';
+import React, { useState, useEffect } from "react";
+import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import Avatar from "../components/common/Avatar";
+import { UserService } from "../services/UserService";
+import UserModal from "../components/users/UserModal";
+import { toast } from "react-toastify";
+import PageHeader from "../components/common/PageHeader";
+import SearchAndFilter from "../components/common/SearchAndFilter";
+import Pagination from "../components/common/Pagination";
+import ConfirmationModal from "../components/common/ConfirmationModal";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import ErrorPage from "../components/common/ErrorPage";
 
 const roleColors = {
-  ADMIN: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
-  USER: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
-  MANAGER: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200 dark:border-green-800'
+  ADMIN:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800",
+  USER: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800",
+  MANAGER:
+    "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200 dark:border-green-800",
 };
 
 const statusColors = {
-  active: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200 dark:border-green-800',
-  inactive: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-200 dark:border-red-800'
+  active:
+    "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border border-green-200 dark:border-green-800",
+  inactive:
+    "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 border border-red-200 dark:border-red-800",
 };
 
 const Users = () => {
@@ -25,10 +31,11 @@ const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [error, setError] = useState(null);
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -44,25 +51,28 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const data = await UserService.getAllUsers();
       setUsers(data);
-    } catch (error) {
-      toast.error('Failed to fetch users');
+    } catch (err) {
+      setError(err.message || "Failed to load users");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === 'ALL' || 
-                       user.role === roleFilter.toUpperCase();
-                       
-    const matchesStatus = statusFilter === 'ALL' || 
-                         (statusFilter === 'ACTIVE' && user.active === true) ||
-                         (statusFilter === 'INACTIVE' && user.active === false);
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesRole =
+      roleFilter === "ALL" || user.role === roleFilter.toUpperCase();
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "ACTIVE" && user.active === true) ||
+      (statusFilter === "INACTIVE" && user.active === false);
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -77,26 +87,26 @@ const Users = () => {
   // Filter configurations
   const filters = [
     {
-      name: 'role',
+      name: "role",
       value: roleFilter,
       onChange: setRoleFilter,
       options: [
-        { value: 'ALL', label: 'All Roles' },
-        { value: 'ADMIN', label: 'Admin' },
-        { value: 'MANAGER', label: 'Manager' },
-        { value: 'USER', label: 'User' }
-      ]
+        { value: "ALL", label: "All Roles" },
+        { value: "ADMIN", label: "Admin" },
+        { value: "MANAGER", label: "Manager" },
+        { value: "USER", label: "User" },
+      ],
     },
     {
-      name: 'status',
+      name: "status",
       value: statusFilter,
       onChange: setStatusFilter,
       options: [
-        { value: 'ALL', label: 'All Status' },
-        { value: 'ACTIVE', label: 'Active' },
-        { value: 'INACTIVE', label: 'Inactive' }
-      ]
-    }
+        { value: "ALL", label: "All Status" },
+        { value: "ACTIVE", label: "Active" },
+        { value: "INACTIVE", label: "Inactive" },
+      ],
+    },
   ];
 
   const handleEditUser = (user) => {
@@ -112,10 +122,10 @@ const Users = () => {
   const confirmDelete = async () => {
     try {
       await UserService.deleteUser(userToDelete.id);
-      toast.success('User deleted successfully');
+      toast.success("User deleted successfully");
       fetchUsers();
     } catch (error) {
-      toast.error('Failed to delete user');
+      toast.error("Failed to delete user");
     } finally {
       setDeleteModalOpen(false);
       setUserToDelete(null);
@@ -126,17 +136,30 @@ const Users = () => {
     try {
       if (selectedUser) {
         await UserService.updateUser(selectedUser.id, formData);
-        toast.success('User updated successfully');
+        toast.success("User updated successfully");
       } else {
-        await UserService.createUser(formData);
-        toast.success('User created successfully');
+        const newUser = await UserService.createUser(formData);
+        setUsers([...users, newUser]);
+        toast.success("User created successfully");
       }
-      fetchUsers();
       setIsModalOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
     } catch (error) {
-      toast.error(selectedUser ? 'Failed to update user' : 'Failed to create user');
+      console.error("Error submitting user:", error);
+      toast.error(
+        selectedUser ? "Failed to update user" : "Failed to create user"
+      );
     }
   };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorPage message={error} onRetry={fetchUsers} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -176,19 +199,34 @@ const Users = () => {
               <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">
+                    <th
+                      scope="col"
+                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6"
+                    >
                       Name
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    >
                       Email
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    >
                       Role
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    >
                       Status
                     </th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                    <th
+                      scope="col"
+                      className="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                    >
                       <span className="sr-only">Actions</span>
                     </th>
                   </tr>
@@ -200,7 +238,9 @@ const Users = () => {
                         <div className="flex items-center">
                           <Avatar user={user} size="sm" />
                           <div className="ml-4">
-                            <div className="font-medium text-gray-900 dark:text-white">{user.name}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {user.name}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -208,14 +248,24 @@ const Users = () => {
                         {user.email}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold leading-5 ${roleColors[user.role]}`}>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold leading-5 ${
+                            roleColors[user.role]
+                          }`}
+                        >
                           {user.role}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold leading-5 
-                          ${user.active ? statusColors.active : statusColors.inactive}`}>
-                          {user.active ? 'Active' : 'Inactive'}
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold leading-5 
+                          ${
+                            user.active
+                              ? statusColors.active
+                              : statusColors.inactive
+                          }`}
+                        >
+                          {user.active ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -288,7 +338,11 @@ const Users = () => {
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Role
                   </p>
-                  <span className={`inline-flex mt-1 rounded-full px-2 py-1 text-xs font-semibold leading-5 ${roleColors[user.role]}`}>
+                  <span
+                    className={`inline-flex mt-1 rounded-full px-2 py-1 text-xs font-semibold leading-5 ${
+                      roleColors[user.role]
+                    }`}
+                  >
                     {user.role}
                   </span>
                 </div>
@@ -296,9 +350,13 @@ const Users = () => {
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     Status
                   </p>
-                  <span className={`inline-flex mt-1 rounded-full px-2 py-1 text-xs font-semibold leading-5 
-                    ${user.active ? statusColors.active : statusColors.inactive}`}>
-                    {user.active ? 'Active' : 'Inactive'}
+                  <span
+                    className={`inline-flex mt-1 rounded-full px-2 py-1 text-xs font-semibold leading-5 
+                    ${
+                      user.active ? statusColors.active : statusColors.inactive
+                    }`}
+                  >
+                    {user.active ? "Active" : "Inactive"}
                   </span>
                 </div>
               </div>
@@ -318,7 +376,10 @@ const Users = () => {
 
       <UserModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedUser(null);
+        }}
         user={selectedUser}
         onSubmit={handleSubmit}
       />
@@ -337,4 +398,4 @@ const Users = () => {
   );
 };
 
-export default Users; 
+export default Users;

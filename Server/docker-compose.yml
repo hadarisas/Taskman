@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: project_service_db
       POSTGRES_USER: taskman
-      POSTGRES_PASSWORD:
+      POSTGRES_PASSWORD: taskman123
     ports:
       - "5431:5432"
 

@@ -14,7 +14,8 @@ const Pagination = ({
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-10">
+    <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t 
+                    border-gray-200 dark:border-gray-700 shadow-lg z-[5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Mobile pagination */}
@@ -22,19 +23,20 @@ const Pagination = ({
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="relative inline-flex items-center rounded-md bg-white dark:bg-gray-900 px-4 py-2 text-sm font-medium 
-                       text-gray-700 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 
-                       hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed 
-                       transition-colors duration-200"
+              className="relative inline-flex items-center rounded-md bg-white dark:bg-gray-900 px-4 py-2 
+                       text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 ring-inset 
+                       ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Previous
             </button>
             <button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="relative ml-3 inline-flex items-center rounded-md bg-white dark:bg-gray-900 px-4 py-2 text-sm font-medium 
-                       text-gray-700 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-700 
-                       hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed 
+              className="relative ml-3 inline-flex items-center rounded-md bg-white dark:bg-gray-900 
+                       px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 
+                       ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 
+                       dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed 
                        transition-colors duration-200"
             >
               Next
@@ -71,10 +73,10 @@ const Pagination = ({
                 <button
                   onClick={() => onPageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset 
-                           ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 
-                           focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed 
-                           transition-colors duration-200"
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 
+                           ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 
+                           dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0 
+                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                   <span className="sr-only">Previous</span>
                   <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -97,10 +99,10 @@ const Pagination = ({
                 <button
                   onClick={() => onPageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset 
-                           ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 
-                           focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed 
-                           transition-colors duration-200"
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 
+                           ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 
+                           dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0 
+                           disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
                   <span className="sr-only">Next</span>
                   <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />

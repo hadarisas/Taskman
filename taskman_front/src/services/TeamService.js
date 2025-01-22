@@ -1,33 +1,21 @@
-import api from '../utils/axios';
+import api from "../utils/axios";
 
 export const TeamService = {
   // Get all teams
   async getAllTeams() {
-    const response = await api.get('/teams');
+    const response = await api.get("/teams");
     return response.data;
   },
 
   // Get single team
-  async getTeam(teamId) {
+  async getTeamById(teamId) {
     const response = await api.get(`/teams/${teamId}`);
-    return response.data;
-  },
-
-  // Get team members
-  async getTeamMembers(teamId) {
-    const response = await api.get(`/teams/${teamId}/members`);
-    return response.data;
-  },
-
-  // Get team leaders
-  async getTeamLeaders(teamId) {
-    const response = await api.get(`/teams/${teamId}/leaders`);
     return response.data;
   },
 
   // Create new team
   async createTeam(teamData) {
-    const response = await api.post('/teams', teamData);
+    const response = await api.post("/teams", teamData);
     return response.data;
   },
 
@@ -39,25 +27,20 @@ export const TeamService = {
 
   // Delete team
   async deleteTeam(teamId) {
-    await api.delete(`/teams/${teamId}`);
-  },
-
-  // Add member to team
-  async addTeamMember(teamId, memberData) {
-    const response = await api.post(`/teams/${teamId}/members`, memberData);
+    const response = await api.delete(`/teams/${teamId}`);
     return response.data;
   },
 
-  // Update member role
-  async updateMemberRole(teamId, memberId, role) {
-    const response = await api.put(`/teams/${teamId}/members/${memberId}/role`, { role });
+  async addMembers(teamId, data) {
+    const response = await api.post(`/teams/${teamId}/members`, data);
     return response.data;
   },
 
-  // Remove member from team
-  async removeTeamMember(teamId, memberId) {
-    await api.delete(`/teams/${teamId}/members/${memberId}`);
-  }
+  async removeMember(teamId, userId) {
+    const response = await api.delete(`/teams/${teamId}/members/${userId}`);
+    console.log(`api: /teams/${teamId}/members/${userId}`);
+    return response.data;
+  },
 };
 
-export default TeamService; 
+export default TeamService;

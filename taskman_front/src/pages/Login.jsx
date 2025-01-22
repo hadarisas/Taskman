@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { AuthService } from "../services/AuthService";
-import { toast } from "react-toastify";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,22 +14,14 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const response = await AuthService.login(email, password);
-
-      if (response.token && response.user) {
-        await login(response.token, response.user);
-        toast.success("Successfully logged in!");
-        navigate("/");
-      } else {
-        throw new Error("Invalid login response");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error(error.message || "Failed to login");
-    } finally {
-      setIsLoading(false);
+    const result = await AuthService.login(email, password);
+    
+    if (result.success && result.data) {
+      await login(result.data.token, result.data.user);
+      navigate("/");
     }
+    
+    setIsLoading(false);
   };
 
   return (

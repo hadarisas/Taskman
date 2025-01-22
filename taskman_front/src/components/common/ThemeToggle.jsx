@@ -1,8 +1,8 @@
-import React from 'react';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import { useTheme } from '../contexts/ThemeContext';
+import React from "react";
+import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
+import { useTheme } from "../../contexts/ThemeContext";
 
-const ThemeToggle = ({ className = '' }) => {
+const ThemeToggle = ({ className = "" }) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -15,9 +15,11 @@ const ThemeToggle = ({ className = '' }) => {
         transition-colors duration-200 ease-in-out
         ${className}
       `}
-      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+      }
     >
-      {theme === 'dark' ? (
+      {theme === "dark" ? (
         <SunIcon className="h-5 w-5" />
       ) : (
         <MoonIcon className="h-5 w-5" />
@@ -26,4 +28,4 @@ const ThemeToggle = ({ className = '' }) => {
   );
 };
 
-export default ThemeToggle; 
+export default ThemeToggle;

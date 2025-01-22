@@ -1,20 +1,20 @@
-import React from 'react';
+import React from "react";
 
-const Avatar = ({ user, size = 'md' }) => {
+const Avatar = ({ user, size = "md" }) => {
   if (!user) return null;
 
   const sizeClasses = {
-    sm: 'h-8 w-8 text-sm',
-    md: 'h-10 w-10 text-base',
-    lg: 'h-12 w-12 text-lg'
+    sm: "h-8 w-8 text-sm",
+    md: "h-10 w-10 text-base",
+    lg: "h-12 w-12 text-lg",
   };
 
   const getInitials = (name) => {
-    if (!name) return '?';
+    if (!name) return "?";
     return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -29,4 +29,4 @@ const Avatar = ({ user, size = 'md' }) => {
   );
 };
 
-export default Avatar; 
+export default Avatar;

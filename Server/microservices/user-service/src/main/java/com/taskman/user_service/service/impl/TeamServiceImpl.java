@@ -5,6 +5,7 @@ import com.taskman.user_service.dao.interfaces.UserDao;
 import com.taskman.user_service.dto.TeamDTO;
 import com.taskman.user_service.dto.TeamMembershipDTO;
 import com.taskman.user_service.dto.UserDTO;
+import com.taskman.user_service.dto.request.AddTeamMemberRequest;
 import com.taskman.user_service.dto.request.CreateTeamRequest;
 import com.taskman.user_service.dto.request.UpdateTeamRequest;
 import com.taskman.user_service.entity.Team;
@@ -18,18 +19,25 @@ import com.taskman.user_service.repository.TeamMembershipRepository;
 import com.taskman.user_service.repository.TeamRepository;
 import com.taskman.user_service.service.interfaces.TeamService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class TeamServiceImpl implements TeamService {
+
+    private static final Logger log = LoggerFactory.getLogger(TeamServiceImpl.class);
 
     private final TeamDao teamDao;
     private final UserDao userDao;
@@ -124,11 +132,14 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public void removeMemberFromTeam(Long teamId, Long userId) {
-        membershipRepository.findByTeamId(teamId).stream()
-                .filter(m -> m.getUser().getId().equals(userId))
-                .findFirst()
-                .ifPresent(membershipRepository::delete);
+    public boolean removeMemberFromTeam(Long teamId, Long userId) {
+        Optional<TeamMembership> membership = membershipRepository.findByTeamIdAndUserId(teamId, userId);
+        if (membership.isPresent()) {
+            membershipRepository.delete(membership.get());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -168,6 +179,46 @@ public class TeamServiceImpl implements TeamService {
                         .role(membership.getUser().getRole())
                         .active(membership.getUser().isActive())
                         .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TeamMembershipDTO> addMembersToTeam(Long teamId, List<AddTeamMemberRequest> members) {
+        Team team = teamDao.findById(teamId)
+                .orElseThrow(() -> new TeamNotFoundException("Team not found with id: " + teamId));
+        
+        LocalDateTime now = LocalDateTime.now();
+        
+        // Add new members, skipping existing ones
+        members.forEach(member -> {
+            try {
+                User user = userDao.findById(member.getUserId())
+                    .orElseThrow(() -> new UserNotFoundException("User not found with id: " + member.getUserId()));
+
+                // Skip if user is already in team
+                if (!isUserInTeam(teamId, member.getUserId())) {
+                    TeamMembership membership = TeamMembership.builder()
+                        .team(team)
+                        .user(user)
+                        .role(member.getRole())
+                        .joinedAt(now)
+                        .build();
+
+                    membershipRepository.save(membership);
+                } else {
+                    // Log or handle the skip (optional)
+                    log.info("Skipped adding user {} as they are already a member of team {}", 
+                        member.getUserId(), teamId);
+                }
+            } catch (UserNotFoundException e) {
+                // Log the error but continue with other members
+                log.error("Failed to add user {}: {}", member.getUserId(), e.getMessage());
+            }
+        });
+        
+        // Return all team members including the newly added ones
+        return membershipRepository.findByTeamId(teamId).stream()
+                .map(this::convertMembershipToDTO)
                 .collect(Collectors.toList());
     }
 

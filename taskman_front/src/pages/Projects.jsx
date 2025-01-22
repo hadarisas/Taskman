@@ -1,96 +1,146 @@
-import React, { useState, useEffect } from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
-import { ProjectService } from '../services/ProjectService';
-import ProjectCard from '../components/projects/ProjectCard';
-import CreateProjectModal from '../components/projects/CreateProjectModal';
-import LoadingSpinner from '../components/LoadingSpinner';
-import PageHeader from '../components/PageHeader';
+import React, { useState, useEffect } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { ProjectService } from "../services/ProjectService";
+import ProjectCard from "../components/projects/ProjectCard";
+import ProjectModal from "../components/projects/ProjectModal";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import PageHeader from "../components/common/PageHeader";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import ErrorPage from "../components/common/ErrorPage";
+import { toast } from "react-toastify";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  const [error, setError] = useState(null);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState(null);
 
   const fetchProjects = async () => {
     try {
+      setIsLoading(true);
+      setError(null);
       const data = await ProjectService.getAllProjects();
       setProjects(data);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
+    } catch (err) {
+      setError(err.message || "Failed to load projects");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateProject = async (projectData) => {
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const handleCreateOrUpdateProject = async (formData) => {
     try {
-      await ProjectService.createProject(projectData);
+      if (selectedProject) {
+        await ProjectService.updateProject(selectedProject.id, formData);
+        toast.success("Project updated successfully");
+      } else {
+        await ProjectService.createProject(formData);
+        toast.success("Project created successfully");
+      }
+      setIsProjectModalOpen(false);
+      setSelectedProject(null);
       fetchProjects();
-      setIsCreateModalOpen(false);
     } catch (error) {
-      console.error('Error creating project:', error);
+      toast.error(
+        selectedProject
+          ? "Failed to update project"
+          : "Failed to create project"
+      );
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    try {
+      await ProjectService.deleteProject(projectToDelete.id);
+      toast.success("Project deleted successfully");
+      fetchProjects();
+    } catch (error) {
+      toast.error("Failed to delete project");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setProjectToDelete(null);
     }
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorPage message={error} onRetry={fetchProjects} />;
   }
 
   return (
-    <div className="p-6">
-      <PageHeader
-        title="Projects"
-        description="Manage and track all your projects"
-      >
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent 
-                   text-sm font-medium rounded-md shadow-sm text-white 
-                   bg-indigo-600 hover:bg-indigo-700 focus:outline-none 
-                   focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                   dark:focus:ring-offset-gray-900"
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageHeader
+          title="Projects"
+          description="A list of all projects in your organization including their status and team assignments."
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          New Project
-        </button>
-      </PageHeader>
+          <button
+            onClick={() => {
+              setSelectedProject(null);
+              setIsProjectModalOpen(true);
+            }}
+            className="inline-flex items-center justify-center rounded-md 
+                     bg-indigo-600 px-4 py-2 text-sm font-semibold text-white 
+                     shadow-sm hover:bg-indigo-500 focus-visible:outline 
+                     focus-visible:outline-2 focus-visible:outline-offset-2 
+                     focus-visible:outline-indigo-600 dark:bg-indigo-500 
+                     dark:hover:bg-indigo-400 transition-colors duration-200"
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Add project
+          </button>
+        </PageHeader>
 
-      {projects.length === 0 ? (
-        <div className="text-center py-12">
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-            No projects yet
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Get started by creating a new project using the button above.
-          </p>
-        </div>
-      ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-6">
           {projects.map((project) => (
-            <ProjectCard 
-              key={project.id} 
-              project={project} 
-              onUpdate={fetchProjects}
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onEdit={() => {
+                setSelectedProject(project);
+                setIsProjectModalOpen(true);
+              }}
+              onDelete={() => {
+                setProjectToDelete(project);
+                setIsDeleteDialogOpen(true);
+              }}
             />
           ))}
         </div>
-      )}
 
-      <CreateProjectModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onCreate={handleCreateProject}
-      />
+        <ProjectModal
+          isOpen={isProjectModalOpen}
+          onClose={() => {
+            setIsProjectModalOpen(false);
+            setSelectedProject(null);
+          }}
+          onSubmit={handleCreateOrUpdateProject}
+          project={selectedProject}
+        />
+
+        <ConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false);
+            setProjectToDelete(null);
+          }}
+          onConfirm={handleDeleteProject}
+          title="Delete Project"
+          message={`Are you sure you want to delete ${projectToDelete?.name}? This action cannot be undone.`}
+        />
+      </div>
     </div>
   );
 };
 
-export default Projects; 
+export default Projects;

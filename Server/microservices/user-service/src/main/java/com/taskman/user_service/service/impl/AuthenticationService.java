@@ -32,6 +32,14 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse response) {
         try {
+            // First, check if user exists and is active
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new AuthenticationFailedException("User not found"));
+            
+            if (!user.isActive()) {
+                throw new AuthenticationFailedException("Account is not active. Please contact administrator.");
+            }
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
@@ -39,7 +47,7 @@ public class AuthenticationService {
                     )
             );
 
-            User user = (User) authentication.getPrincipal();
+            user = (User) authentication.getPrincipal();
             String accessToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 

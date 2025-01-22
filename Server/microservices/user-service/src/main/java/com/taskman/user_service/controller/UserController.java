@@ -28,7 +28,7 @@ public class UserController {
     private final UserService userService;
 
     // Create user
-    @PostMapping("/register")
+    @PostMapping
     @Operation(summary = "Register new user")
     @ApiResponse(responseCode = "201", description = "User created successfully")
     @ApiResponse(responseCode = "400", description = "Invalid input")
@@ -36,7 +36,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.createUser(request));
     }
-
     // Get user by id
     @GetMapping("/{id}")
     public UserDTO getUserById(@PathVariable Long id) {
