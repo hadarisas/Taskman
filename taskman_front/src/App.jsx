@@ -19,41 +19,45 @@ import ProjectDetails from "./pages/ProjectDetails";
 import { TeamProvider } from "./contexts/TeamContext";
 import TimelinePage from "./pages/project/TimelinePage";
 import MembersPage from "./pages/project/MembersPage";
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <TeamProvider>
-          <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<></>} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="projects" element={<Projects />} />
-                <Route path="/projects/:projectId" element={<ProjectDetails />}>
-                  <Route index element={<KanbanPage />} />
-                  <Route path="kanban" element={<KanbanPage />} />
-                  <Route path="members" element={<MembersPage />} />
-                  <Route path="timeline" element={<TimelinePage />} />
+    <Provider store={store}>
+      <ThemeProvider>
+        <AuthProvider>
+          <TeamProvider>
+            <Router>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<></>} />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="projects" element={<Projects />} />
+                  <Route path="/projects/:projectId" element={<ProjectDetails />}>
+                    <Route index element={<KanbanPage />} />
+                    <Route path="kanban" element={<KanbanPage />} />
+                    <Route path="members" element={<MembersPage />} />
+                    <Route path="timeline" element={<TimelinePage />} />
+                  </Route>
+                  <Route path="teams" element={<Teams />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="profile" element={<></>} />
                 </Route>
-                <Route path="teams" element={<Teams />} />
-                <Route path="users" element={<Users />} />
-                <Route path="profile" element={<></>} />
-              </Route>
-            </Routes>
-          </Router>
-        </TeamProvider>
-      </AuthProvider>
-    </ThemeProvider>
+              </Routes>
+            </Router>
+          </TeamProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </Provider>
   );
 }
 

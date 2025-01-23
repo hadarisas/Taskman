@@ -10,6 +10,9 @@ import Pagination from "../components/common/Pagination";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ErrorPage from "../components/common/ErrorPage";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers, selectAllUsers, updateUser, removeUser, selectUsersLoading } from '../store/slices/usersSlice';
+import { updateTeamMember, removeTeamMember, selectAllTeams } from '../store/slices/teamsSlice';
 
 const roleColors = {
   ADMIN:
@@ -27,14 +30,16 @@ const statusColors = {
 };
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
+  const dispatch = useDispatch();
+  const users = useSelector(selectAllUsers);
+  const teams = useSelector(selectAllTeams) || [];
+  const isLoading = useSelector(selectUsersLoading);
+  const error = useSelector(state => state.users.error);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [error, setError] = useState(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,21 +50,8 @@ const Users = () => {
   const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await UserService.getAllUsers();
-      setUsers(data);
-    } catch (err) {
-      setError(err.message || "Failed to load users");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -122,8 +114,12 @@ const Users = () => {
   const confirmDelete = async () => {
     try {
       await UserService.deleteUser(userToDelete.id);
+      dispatch(removeUser(userToDelete.id));
+      dispatch(removeTeamMember({
+        teamId: userToDelete.teamId,
+        userId: userToDelete.id
+      }));
       toast.success("User deleted successfully");
-      fetchUsers();
     } catch (error) {
       toast.error("Failed to delete user");
     } finally {
@@ -132,24 +128,44 @@ const Users = () => {
     }
   };
 
+  const handleUserUpdate = async (formData) => {
+    try {
+      const updatedUser = await UserService.updateUser(selectedUser.id, formData);
+      dispatch(updateUser(updatedUser));
+      
+      // Safely iterate over teams
+      if (teams.length > 0) {
+        teams.forEach(team => {
+          if (team.members?.some(member => member.userId === updatedUser.id)) {
+            dispatch(updateTeamMember({
+              teamId: team.id,
+              userId: updatedUser.id,
+              userData: updatedUser
+            }));
+          }
+        });
+      }
+      
+      toast.success("User updated successfully");
+    } catch (error) {
+      toast.error("Failed to update user");
+    }
+  };
+
   const handleSubmit = async (formData) => {
     try {
       if (selectedUser) {
-        await UserService.updateUser(selectedUser.id, formData);
-        toast.success("User updated successfully");
+        await handleUserUpdate(formData);
       } else {
         const newUser = await UserService.createUser(formData);
-        setUsers([...users, newUser]);
+        dispatch(addUser(newUser));
         toast.success("User created successfully");
       }
       setIsModalOpen(false);
       setSelectedUser(null);
-      fetchUsers();
     } catch (error) {
       console.error("Error submitting user:", error);
-      toast.error(
-        selectedUser ? "Failed to update user" : "Failed to create user"
-      );
+      toast.error(selectedUser ? "Failed to update user" : "Failed to create user");
     }
   };
 
@@ -158,7 +174,7 @@ const Users = () => {
   }
 
   if (error) {
-    return <ErrorPage message={error} onRetry={fetchUsers} />;
+    return <ErrorPage message={error} onRetry={() => dispatch(fetchUsers())} />;
   }
 
   return (

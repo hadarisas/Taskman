@@ -14,6 +14,8 @@ import TeamManagementModal from "../components/projects/TeamManagementModal";
 import ProjectSettingsModal from "../components/projects/ProjectSettingsModal";
 import ConfirmationModal from "../components/common/ConfirmationModal";
 import { Outlet } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers, selectUsersByIds, selectUsersLoading } from '../store/slices/usersSlice';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -25,6 +27,10 @@ const ProjectDetails = () => {
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const dispatch = useDispatch();
+  const memberIds = project?.members?.map(member => member.userId) || [];
+  const users = useSelector(state => selectUsersByIds(state, memberIds));
+  const isUsersLoading = useSelector(selectUsersLoading);
 
   // Get current tab from URL or default to 'kanban'
   const currentTab = location.pathname.split("/").pop();
@@ -34,7 +40,10 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     fetchProject();
-  }, [projectId]);
+    if (memberIds.length > 0) {
+      dispatch(fetchUsers());
+    }
+  }, [projectId, dispatch]);
 
   const fetchProject = async () => {
     try {

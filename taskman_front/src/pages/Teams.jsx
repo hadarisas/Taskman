@@ -10,11 +10,16 @@ import PageHeader from "../components/common/PageHeader";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import ErrorPage from "../components/common/ErrorPage";
 import { toast } from "react-toastify";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTeams, selectAllTeams } from '../store/slices/teamsSlice';
+import { selectAllUsers } from '../store/slices/usersSlice';
 
 const Teams = () => {
-  const [teams, setTeams] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const teams = useSelector(selectAllTeams);
+  const users = useSelector(selectAllUsers);
+  const isLoading = useSelector(state => state.teams.isLoading);
+  const error = useSelector(state => state.teams.error);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -22,61 +27,56 @@ const Teams = () => {
   const [teamToDelete, setTeamToDelete] = useState(null);
   const [availableUsers, setAvailableUsers] = useState([]);
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const [teamsData, usersData] = await Promise.all([
-        TeamService.getAllTeams(),
-        UserService.getAllUsers(),
-      ]);
-
-      setTeams(teamsData);
-      setAvailableUsers(
-        usersData.map((user) => ({
-          value: user.id,
-          label: user.name,
-        }))
-      );
-    } catch (err) {
-      setError(err.message || "Failed to load teams and users");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-  }, []);
+    dispatch(fetchTeams());
+  }, [dispatch]);
 
-  const handleCreateOrUpdateTeam = async (formData) => {
+  const handleSubmit = async (formData) => {
     try {
       if (selectedTeam) {
-        await TeamService.updateTeam(selectedTeam.id, formData);
+        const updatedTeam = await TeamService.updateTeam(selectedTeam.id, formData);
+        dispatch(updateTeam(updatedTeam));
         toast.success("Team updated successfully");
       } else {
-        await TeamService.createTeam(formData);
+        const newTeam = await TeamService.createTeam(formData);
+        dispatch(addTeam(newTeam));
         toast.success("Team created successfully");
       }
       setIsTeamModalOpen(false);
       setSelectedTeam(null);
-      fetchData();
     } catch (error) {
-      toast.error(
-        selectedTeam ? "Failed to update team" : "Failed to create team"
-      );
+      console.error("Error submitting team:", error);
+      toast.error(selectedTeam ? "Failed to update team" : "Failed to create team");
     }
   };
 
-  const handleAddMembers = async (members) => {
+  const handleAddMembers = async (teamId, newMembers) => {
     try {
-      await TeamService.addMembers(selectedTeam.id, { members });
-      toast.success("Team members added successfully");
-      setIsMembersModalOpen(false);
-      setSelectedTeam(null);
-      fetchData();
+      const updatedTeam = await TeamService.addMembers(teamId, newMembers);
+      dispatch(updateTeam(updatedTeam));
+      toast.success("Members added successfully");
     } catch (error) {
-      toast.error("Failed to add team members");
+      toast.error("Failed to add members");
+    }
+  };
+
+  const handleRemoveMember = async (teamId, userId) => {
+    try {
+      await TeamService.removeMember(teamId, userId);
+      dispatch(removeTeamMember({ teamId, userId }));
+      toast.success("Member removed successfully");
+    } catch (error) {
+      toast.error("Failed to remove member");
+    }
+  };
+
+  const handleDeleteTeam = async (teamId) => {
+    try {
+      await TeamService.deleteTeam(teamId);
+      dispatch(removeTeam(teamId));
+      toast.success("Team deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete team");
     }
   };
 
@@ -90,50 +90,12 @@ const Teams = () => {
     setIsMembersModalOpen(true);
   };
 
-  const handleRemoveMember = async (teamId, userId) => {
-    try {
-      await TeamService.removeMember(teamId, userId);
-      setTeams(prevTeams => prevTeams.map(team => {
-        if (team.id === teamId) {
-          return {
-            ...team,
-            members: team.members.filter(member => member.userId !== userId)
-          };
-        }
-        return team;
-      }));
-      
-    } catch (error) {
-      toast.error("Failed to remove member");
-    }
-  };
-
-  const handleDeleteTeam = (team) => {
-    setTeamToDelete(team);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    try {
-      await TeamService.deleteTeam(teamToDelete.id);
-      toast.success("Team deleted successfully");
-      fetchData();
-    } catch (error) {
-      toast.error("Failed to delete team");
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setTeamToDelete(null);
-    }
-  };
-
-
-
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
   if (error) {
-    return <ErrorPage message={error} onRetry={fetchData} />;
+    return <ErrorPage message={error} onRetry={() => dispatch(fetchTeams())} />;
   }
 
   return (
@@ -179,7 +141,7 @@ const Teams = () => {
             setIsTeamModalOpen(false);
             setSelectedTeam(null);
           }}
-          onSubmit={handleCreateOrUpdateTeam}
+          onSubmit={handleSubmit}
           team={selectedTeam}
         />
 
@@ -200,7 +162,7 @@ const Teams = () => {
             setIsDeleteDialogOpen(false);
             setTeamToDelete(null);
           }}
-          onConfirm={confirmDelete}
+          onConfirm={() => handleDeleteTeam(teamToDelete.id)}
           title="Delete Team"
           message={`Are you sure you want to delete the team "${teamToDelete?.name}"? This action cannot be undone.`}
         />
