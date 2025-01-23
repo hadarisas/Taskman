@@ -1,12 +1,14 @@
 classDiagram
-class Project {
--Long id
--String name
--String description
--Date startDate
--Date endDate
--ProjectStatus status  
- }
+    class Project {
+        -Long id
+        -String name
+        -String description
+        -Date startDate
+        -Date endDate
+        -ProjectStatus status
+        -Integer totalTasks
+        -Integer completedTasks
+    }
 
     class Task {
         -Long id
@@ -16,13 +18,19 @@ class Project {
         -TaskStatus status
         -Date startDate
         -Date dueDate
+        -String projectId;
+        -Date createdAt
+        -Date updatedAt;
+        -String createdBy;
     }
 
     class User {
         -Long id
         -String name
+        -String password
         -String email
         -UserRole role
+        -boolean active
     }
 
     class Team {
@@ -34,14 +42,24 @@ class Project {
         -Long id
         -String content
         -Date createdAt
+        -Date updatedAt;
+        -String authorId;
+        -String entityId;
+        -String entityType;
+        -Long parentCommentId;
+        -boolean isEdited
     }
 
     class Notification {
         -Long id
+        -String recipientId;
         -NotificationType type
         -String content
+        -String entityId;
+        -EntityType entityType;
+        -boolean isRead;
+        -LocalDateTime readAt;
         -Date createdAt
-        -User recipient
     }
 
     Project "1" -- "*" Task
