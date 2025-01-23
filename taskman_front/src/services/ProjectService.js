@@ -52,6 +52,16 @@ export const ProjectService = {
       throw error;
     }
   },
+
+  getProjectMembers: async (projectId) => {
+    try {
+      const response = await api.get(`/projects/${projectId}/members`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching project members:", error);
+      throw error;
+    }
+  }
 };
 
 export default ProjectService;

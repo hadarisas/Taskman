@@ -120,34 +120,7 @@ const KanbanPage = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <PageHeader
-        title={project?.name || "Project Tasks"}
-        description={project?.description}
-      >
-        <div className="flex space-x-2">
-          <Button
-            variant="primary"
-            onClick={() => {
-              setSelectedTask(null);
-              setIsTaskModalOpen(true);
-            }}
-          >
-            <PlusIcon className="h-5 w-5 mr-1" />
-            Add Task
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setIsProjectModalOpen(true)}
-          >
-            <PencilSquareIcon className="h-5 w-5 mr-1" />
-            Edit Project
-          </Button>
-          <Button variant="danger" onClick={() => setIsDeleteDialogOpen(true)}>
-            <TrashIcon className="h-5 w-5 mr-1" />
-            Delete Project
-          </Button>
-        </div>
-      </PageHeader>
+     
 
       <div className="flex-1 mt-6">
         <KanbanBoard

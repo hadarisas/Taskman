@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, DocumentIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import Button from "../common/Button";
 
@@ -8,8 +8,9 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     reset,
+    watch,
   } = useForm({
     defaultValues: {
       name: project?.name || "",
@@ -17,11 +18,30 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
       startDate: project?.startDate || "",
       endDate: project?.endDate || "",
       status: project?.status || "NOT_STARTED",
+      priority: project?.priority || "MEDIUM",
+      estimatedHours: project?.estimatedHours || "",
     },
   });
 
-  const handleFormSubmit = (data) => {
-    onSubmit(data);
+  // Watch start date to validate end date
+  const startDate = watch("startDate");
+
+  useEffect(() => {
+    if (project) {
+      reset({
+        name: project.name,
+        description: project.description,
+        startDate: project.startDate,
+        endDate: project.endDate,
+        status: project.status,
+        priority: project.priority || "MEDIUM",
+        estimatedHours: project.estimatedHours || "",
+      });
+    }
+  }, [project, reset]);
+
+  const handleFormSubmit = async (data) => {
+    await onSubmit(data);
     reset();
   };
 
@@ -35,9 +55,14 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="mx-auto max-w-lg w-full rounded-xl bg-white dark:bg-gray-800 shadow-xl">
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white">
-              {project ? "Edit Project" : "Create Project"}
-            </Dialog.Title>
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                <DocumentIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white">
+                {project ? "Edit Project" : "Create Project"}
+              </Dialog.Title>
+            </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -48,15 +73,22 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
 
           <form
             onSubmit={handleSubmit(handleFormSubmit)}
-            className="p-6 space-y-4"
+            className="p-6 space-y-6"
           >
+            {/* Project Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Project Name
+                Project Name *
               </label>
               <input
                 type="text"
-                {...register("name", { required: "Project name is required" })}
+                {...register("name", {
+                  required: "Project name is required",
+                  minLength: {
+                    value: 3,
+                    message: "Project name must be at least 3 characters",
+                  },
+                })}
                 className="w-full rounded-md border border-gray-300 dark:border-gray-600 
                          bg-white dark:bg-gray-700 px-3 py-2 text-sm 
                          focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400
@@ -69,6 +101,7 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
               )}
             </div>
 
+            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description
@@ -83,10 +116,30 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
               />
             </div>
 
+            {/* Priority */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Priority
+              </label>
+              <select
+                {...register("priority")}
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 
+                         bg-white dark:bg-gray-700 px-3 py-2 text-sm 
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400
+                         text-gray-900 dark:text-white"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+
+            {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Start Date
+                  Start Date *
                 </label>
                 <input
                   type="date"
@@ -107,11 +160,17 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  End Date
+                  End Date *
                 </label>
                 <input
                   type="date"
-                  {...register("endDate", { required: "End date is required" })}
+                  {...register("endDate", {
+                    required: "End date is required",
+                    validate: (value) =>
+                      !startDate ||
+                      new Date(value) >= new Date(startDate) ||
+                      "End date must be after start date",
+                  })}
                   className="w-full rounded-md border border-gray-300 dark:border-gray-600 
                            bg-white dark:bg-gray-700 px-3 py-2 text-sm 
                            focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400
@@ -125,6 +184,7 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
               </div>
             </div>
 
+            {/* Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Status
@@ -140,15 +200,21 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
                 <option value="IN_PROGRESS">In Progress</option>
                 <option value="ON_HOLD">On Hold</option>
                 <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
 
+            {/* Action Buttons */}
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="secondary" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                {project ? "Update Project" : "Create Project"}
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting
+                  ? "Saving..."
+                  : project
+                  ? "Update Project"
+                  : "Create Project"}
               </Button>
             </div>
           </form>

@@ -1,14 +1,16 @@
-import React, { useState } from "react";
-import { DragDropContext } from "react-beautiful-dnd";
-import KanbanColumn from "./KanbanColumn";
+import React from "react";
+import { DndContext, closestCenter } from "@dnd-kit/core";
 import { StrictModeDroppable } from "./StrictModeDroppable";
+import { TaskCard } from './TaskCard';
+import { PlusIcon } from "@heroicons/react/24/outline";
 
-const TASK_STATUS = {
+const COLUMNS = {
   TODO: {
     id: "TODO",
     label: "To Do",
     color: "bg-gray-50 dark:bg-gray-800/50",
     borderColor: "border-gray-200 dark:border-gray-700",
+    headerColor: "text-gray-700 dark:text-gray-200",
     icon: "📋",
   },
   IN_PROGRESS: {
@@ -16,6 +18,7 @@ const TASK_STATUS = {
     label: "In Progress",
     color: "bg-blue-50 dark:bg-blue-900/30",
     borderColor: "border-blue-200 dark:border-blue-800",
+    headerColor: "text-blue-700 dark:text-blue-200",
     icon: "🔄",
   },
   REVIEW: {
@@ -23,6 +26,7 @@ const TASK_STATUS = {
     label: "In Review",
     color: "bg-yellow-50 dark:bg-yellow-900/30",
     borderColor: "border-yellow-200 dark:border-yellow-800",
+    headerColor: "text-yellow-700 dark:text-yellow-200",
     icon: "👀",
   },
   DONE: {
@@ -30,98 +34,66 @@ const TASK_STATUS = {
     label: "Completed",
     color: "bg-green-50 dark:bg-green-900/30",
     borderColor: "border-green-200 dark:border-green-800",
+    headerColor: "text-green-700 dark:text-green-200",
     icon: "✅",
-  },
-  CANCELLED: {
-    id: "CANCELLED",
-    label: "Cancelled",
-    color: "bg-red-50 dark:bg-red-900/30",
-    borderColor: "border-red-200 dark:border-red-800",
-    icon: "❌",
-  },
+  }
 };
 
-const KanbanBoard = ({ tasks, onTaskMove, onTaskClick }) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = (result) => {
-    setIsDragging(false);
-
-    if (!result.destination) return;
-
-    const sourceStatus = result.source.droppableId;
-    const destinationStatus = result.destination.droppableId;
-    const taskId = result.draggableId;
-
-    if (sourceStatus !== destinationStatus) {
-      const task = tasks.find((t) => t.id.toString() === taskId);
-      if (task) {
-        onTaskMove(task.id, destinationStatus);
-      }
+const KanbanBoard = ({ tasks = [], onTaskMove, onTaskClick, onAddTask }) => {
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      onTaskMove?.(active.id, over.id);
     }
   };
 
-  const getTasksByStatus = (status) => {
-    return tasks.filter((task) => task.status === status);
-  };
-
   return (
-    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4 px-1">
-        {Object.values(TASK_STATUS).map((status) => (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
+        {Object.values(COLUMNS).map((column) => (
           <div
-            key={status.id}
-            className="flex-1 min-w-[300px] max-w-[350px] md:min-w-[320px]"
+            key={column.id}
+            className={`rounded-lg ${column.color} border ${column.borderColor} backdrop-blur-sm`}
           >
-            <div
-              className="flex flex-col h-full rounded-lg border bg-white dark:bg-gray-800 
-                          shadow-sm overflow-hidden"
-            >
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">{status.icon}</span>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {status.label}
-                    </h3>
-                  </div>
-                  <span
-                    className="inline-flex items-center justify-center w-6 h-6 text-xs 
-                                font-medium rounded-full bg-gray-100 dark:bg-gray-700 
-                                text-gray-600 dark:text-gray-400"
-                  >
-                    {getTasksByStatus(status.id).length}
+            {/* Column Header */}
+            <div className="p-4 border-b border-inherit">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg">{column.icon}</span>
+                  <h3 className={`font-medium ${column.headerColor}`}>
+                    {column.label}
+                  </h3>
+                  <span className="px-2 py-1 text-xs rounded-full bg-white/50 dark:bg-gray-800/50">
+                    {tasks.filter(task => task.status === column.id).length}
                   </span>
                 </div>
+                <button
+                  onClick={() => onAddTask?.(column.id)}
+                  className="p-1 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-full transition-colors"
+                >
+                  <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                </button>
               </div>
-
-              <StrictModeDroppable droppableId={status.id}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`flex-1 p-2 overflow-y-auto min-h-[200px] max-h-[600px]
-                              ${status.color} ${status.borderColor}`}
-                  >
-                    <KanbanColumn
-                      tasks={getTasksByStatus(status.id)}
-                      isDragging={isDragging}
-                      isDropping={snapshot.isDraggingOver}
-                      onTaskClick={onTaskClick}
-                    />
-                    {provided.placeholder}
-                  </div>
-                )}
-              </StrictModeDroppable>
             </div>
+
+            {/* Tasks Container */}
+            <StrictModeDroppable id={column.id}>
+              <div className="p-4 space-y-3 min-h-[calc(100vh-300px)]">
+                {tasks
+                  .filter(task => task.status === column.id)
+                  .map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onClick={() => onTaskClick?.(task)}
+                    />
+                  ))}
+              </div>
+            </StrictModeDroppable>
           </div>
         ))}
       </div>
-    </DragDropContext>
+    </DndContext>
   );
 };
 

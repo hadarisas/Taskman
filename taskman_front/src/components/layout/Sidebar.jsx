@@ -48,7 +48,11 @@ const Sidebar = () => {
           <div className="flex flex-col flex-1 min-h-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4">
-                <img className="h-8 w-auto" src="/logo.svg" alt="TaskMan" />
+                <img
+                  className="h-8 w-auto"
+                  src="/logo-taskman.png"
+                  alt="TaskMan"
+                />
               </div>
               <nav className="mt-5 flex-1 px-2 space-y-1">
                 {navigation.map((item) => (
@@ -122,10 +126,11 @@ const Sidebar = () => {
 
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-4">
-              <img className="h-8 w-auto" src="/logo.svg" alt="TaskMan" />
-              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-                TaskMan
-              </span>
+              <img
+                className="h-8 w-auto text-center justify-center"
+                src="/logo-taskman.png"
+                alt="TaskMan"
+              />
             </div>
             <nav className="mt-5 px-2 space-y-1">
               {navigation.map((item) => (

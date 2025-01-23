@@ -1,20 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Droppable } from 'react-beautiful-dnd';
+import { useDroppable } from "@dnd-kit/core";
 
-export const StrictModeDroppable = ({ children, ...props }) => {
-  const [enabled, setEnabled] = useState(false);
 
-  useEffect(() => {
-    const animation = requestAnimationFrame(() => setEnabled(true));
-    return () => {
-      cancelAnimationFrame(animation);
-      setEnabled(false);
-    };
-  }, []);
+export const StrictModeDroppable = ({ id, children }) => {
+  const { setNodeRef } = useDroppable({
+    id: id,
+  });
 
-  if (!enabled) {
-    return null;
-  }
-
-  return <Droppable {...props}>{children}</Droppable>;
+  return (
+    <div ref={setNodeRef} className="min-h-[50px]">
+      {children}
+    </div>
+  );
 }; 
