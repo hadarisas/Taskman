@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 
 
-@FeignClient(name = "${task-service.name}")
+@FeignClient(name = "${taskservice.name}")
 public interface TaskServiceClient {
     @GetMapping("/api/tasks/{taskId}/notification-recipients")
     ResponseEntity<TaskNotificationRecipientsDto> getTaskNotificationRecipients(

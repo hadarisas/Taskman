@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.function.Function;  // Add this import
+import java.util.function.Function;  
 
 @Service
 public class JwtService {
@@ -35,7 +35,6 @@ public class JwtService {
 
     public String extractUserId(String token) {
         Claims claims = extractAllClaims(token);
-        // Convert Integer to String if needed
         Object userIdObj = claims.get("userId");
         if (userIdObj instanceof Integer) {
             return String.valueOf(userIdObj);

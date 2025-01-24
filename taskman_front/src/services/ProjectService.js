@@ -61,6 +61,35 @@ export const ProjectService = {
       console.error("Error fetching project members:", error);
       throw error;
     }
+  },
+
+  addMember: async (projectId, userId, role) => {
+    try {
+      const response = await api.post(`/projects/${projectId}/members?targetUserId=${userId}&role=${role}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error adding project member:", error);
+      throw error;
+    }
+  },
+
+  removeMember: async (projectId, userId) => {
+    try {
+      await api.delete(`/projects/${projectId}/members/${userId}`);
+    } catch (error) {
+      console.error("Error removing project member:", error);
+      throw error;
+    }
+  },
+
+  updateMemberRole: async (projectId, userId, role) => {
+    try {
+      const response = await api.put(`/projects/${projectId}/members/${userId}/role?role=${role}`); 
+      return response.data;
+    } catch (error) {
+      console.error("Error updating project member role:", error);
+      throw error;
+    }
   }
 };
 

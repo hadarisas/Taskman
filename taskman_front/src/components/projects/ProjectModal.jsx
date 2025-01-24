@@ -209,7 +209,13 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, project }) => {
               <Button type="button" variant="secondary" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
+              <Button className="inline-flex justify-center rounded-lg bg-indigo-600 px-4 py-2 
+                                 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 
+                                 focus-visible:outline focus-visible:outline-2 
+                                 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 
+                                 dark:bg-indigo-500 dark:hover:bg-indigo-400 
+                                 transition-colors duration-200" 
+              type="submit" variant="primary" disabled={isSubmitting}>
                 {isSubmitting
                   ? "Saving..."
                   : project

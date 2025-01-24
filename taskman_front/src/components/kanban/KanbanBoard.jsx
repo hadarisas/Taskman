@@ -1,6 +1,6 @@
 import React from "react";
-import { DndContext, closestCenter } from "@dnd-kit/core";
-import { StrictModeDroppable } from "./StrictModeDroppable";
+import { DndContext, closestCorners } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
 import { TaskCard } from './TaskCard';
 import { PlusIcon } from "@heroicons/react/24/outline";
 
@@ -39,37 +39,57 @@ const COLUMNS = {
   }
 };
 
+const DroppableColumn = ({ id, children }) => {
+  const { setNodeRef } = useDroppable({
+    id: id
+  });
+
+  return (
+    <div ref={setNodeRef} className="h-full">
+      {children}
+    </div>
+  );
+};
+
 const KanbanBoard = ({ tasks = [], onTaskMove, onTaskClick, onAddTask }) => {
   const handleDragEnd = (event) => {
     const { active, over } = event;
+    
     if (over && active.id !== over.id) {
-      onTaskMove?.(active.id, over.id);
+      const taskId = active.id;
+      const newStatus = over.id;
+      
+      // Only call onTaskMove if the status is different
+      const task = tasks.find(t => t.id === taskId);
+      if (task && task.status !== newStatus) {
+        onTaskMove(taskId, newStatus);
+      }
     }
   };
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
+    <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
         {Object.values(COLUMNS).map((column) => (
           <div
             key={column.id}
-            className={`rounded-lg ${column.color} border ${column.borderColor} backdrop-blur-sm`}
+            className={`flex flex-col rounded-lg ${column.color} border ${column.borderColor} backdrop-blur-sm`}
           >
             {/* Column Header */}
-            <div className="p-4 border-b border-inherit">
+            <div className="p-3 border-b border-inherit">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg">{column.icon}</span>
-                  <h3 className={`font-medium ${column.headerColor}`}>
+                <div className="flex items-center min-w-0 space-x-2">
+                  <span className="text-lg flex-shrink-0">{column.icon}</span>
+                  <h3 className={`font-medium truncate ${column.headerColor}`}>
                     {column.label}
                   </h3>
-                  <span className="px-2 py-1 text-xs rounded-full bg-white/50 dark:bg-gray-800/50">
+                  <span className="px-2 py-1 text-xs rounded-full bg-white/50 dark:bg-gray-800/50 flex-shrink-0">
                     {tasks.filter(task => task.status === column.id).length}
                   </span>
                 </div>
                 <button
-                  onClick={() => onAddTask?.(column.id)}
-                  className="p-1 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-full transition-colors"
+                  onClick={() => onAddTask(column.id)}
+                  className="p-1 hover:bg-white/30 dark:hover:bg-gray-700/30 rounded-full transition-colors flex-shrink-0 ml-2"
                 >
                   <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 </button>
@@ -77,19 +97,19 @@ const KanbanBoard = ({ tasks = [], onTaskMove, onTaskClick, onAddTask }) => {
             </div>
 
             {/* Tasks Container */}
-            <StrictModeDroppable id={column.id}>
-              <div className="p-4 space-y-3 min-h-[calc(100vh-300px)]">
+            <DroppableColumn id={column.id}>
+              <div className="p-3 space-y-3 min-h-[200px] h-[calc(100vh-200px)] overflow-y-auto">
                 {tasks
                   .filter(task => task.status === column.id)
                   .map(task => (
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onClick={() => onTaskClick?.(task)}
+                      onClick={() => onTaskClick(task)}
                     />
                   ))}
               </div>
-            </StrictModeDroppable>
+            </DroppableColumn>
           </div>
         ))}
       </div>

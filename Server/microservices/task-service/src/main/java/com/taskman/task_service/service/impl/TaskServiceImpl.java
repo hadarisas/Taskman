@@ -53,7 +53,8 @@ public class TaskServiceImpl implements TaskService {
         Task savedTask = taskDao.save(task);
 
         // Get project admins for notifications
-        String token = "Bearer " + jwtService.generateSystemToken();
+        String token = "Bearer " + jwtService.getSystemToken();
+
 
         List<String> projectAdmins = projectServiceClient.getProjectAdmins(savedTask.getProjectId(), token);
         taskEventProducer.sendTaskCreatedEvent(savedTask);
@@ -257,7 +258,8 @@ public class TaskServiceImpl implements TaskService {
                 .map(TaskAssignment::getUserId)
                 .collect(Collectors.toList());
 
-        String token = "Bearer " + jwtService.generateSystemToken();
+        String token = "Bearer " + jwtService.getSystemToken();
+
 
         // Get project admins through project service client
         List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);

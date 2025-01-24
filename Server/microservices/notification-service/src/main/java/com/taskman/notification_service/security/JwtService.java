@@ -1,9 +1,11 @@
 package com.taskman.notification_service.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,13 @@ import java.util.stream.Collectors;
 public class JwtService {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
+    private String systemToken;
 
+    @PostConstruct
+    public void init() {
+        // Generate the system token after secretKey is initialized
+        this.systemToken = generateSystemToken();
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -69,6 +77,9 @@ public class JwtService {
                 .getBody();
     }
 
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
 
     public String generateSystemToken() {
         Map<String, Object> claims = new HashMap<>();
@@ -77,15 +88,21 @@ public class JwtService {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject("system")
+                .setSubject("SYSTEM")
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
                 .signWith(getSigningKey())
                 .compact();
     }
 
-
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    public String getSystemToken() {
+        try {
+            isTokenValid(systemToken);
+            return systemToken;
+        } catch (ExpiredJwtException ex) {
+            // Token expired, generate a new one
+            systemToken = generateSystemToken();
+            return systemToken;
+        }
     }
 }

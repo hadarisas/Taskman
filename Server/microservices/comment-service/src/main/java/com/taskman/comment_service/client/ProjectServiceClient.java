@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
-@FeignClient(name = "${project-service.name}")
+@FeignClient(name = "${projectservice.name}")
 public interface ProjectServiceClient {
     @GetMapping("/api/projects/{projectId}/members")
     ResponseEntity<List<ProjectMembershipDto>> getProjectMembers(

@@ -39,7 +39,8 @@ public class TaskEventProducer {
 
     public void sendTaskCreatedEvent(Task task) {
         try {
-            String token = "Bearer " + jwtService.generateSystemToken();
+            String token = "Bearer " + jwtService.getSystemToken();
+
 
             List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);
 
@@ -68,7 +69,8 @@ public class TaskEventProducer {
 
     public void sendTaskAssignedEvent(Task task, String assigneeId) {
         try {
-            String token = "Bearer " + jwtService.generateSystemToken();
+            String token = "Bearer " + jwtService.getSystemToken();
+
 
             List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);
 
@@ -101,7 +103,8 @@ public class TaskEventProducer {
                     .map(TaskAssignment::getUserId)
                     .collect(Collectors.toList());
 
-            String token = "Bearer " + jwtService.generateSystemToken();
+            String token = "Bearer " + jwtService.getSystemToken();
+
 
             List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);
 
@@ -135,7 +138,8 @@ public class TaskEventProducer {
                     .map(TaskAssignment::getUserId)
                     .collect(Collectors.toList());
 
-            String token = "Bearer " + jwtService.generateSystemToken();
+            String token = "Bearer " + jwtService.getSystemToken();
+
 
             List<String> projectAdmins = projectServiceClient.getProjectAdmins(task.getProjectId(), token);
 
@@ -169,7 +173,10 @@ public class TaskEventProducer {
         log.info("Checking task deadlines...");
         List<Task> tasks = taskDao.findAll();
         LocalDate today = LocalDate.now();
-        String token = "Bearer " + jwtService.generateSystemToken();
+        String token = "Bearer " + jwtService.getSystemToken();
+
+
+
 
         for (Task task : tasks) {
             if (task.getDueDate() == null || task.getStatus() == TaskStatus.DONE) {

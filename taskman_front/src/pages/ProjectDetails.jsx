@@ -5,17 +5,22 @@ import {
   UserGroupIcon,
   CalendarIcon,
   Cog6ToothIcon,
-  NoSymbolIcon
+  NoSymbolIcon,
+  ChatBubbleBottomCenterTextIcon
 } from "@heroicons/react/24/outline";
 import PageHeader from "../components/common/PageHeader";
 import { ProjectService } from "../services/ProjectService";
 import ProjectModal from "../components/projects/ProjectModal";
 import TeamManagementModal from "../components/projects/TeamManagementModal";
-import ProjectSettingsModal from "../components/projects/ProjectSettingsModal";
 import ConfirmationModal from "../components/common/ConfirmationModal";
-import { Outlet } from "react-router-dom";
+import { Outlet, Routes, Route } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, selectUsersByIds, selectUsersLoading } from '../store/slices/usersSlice';
+import CommentSection from "../pages/project/CommentSection";
+import KanbanPage from "../pages/project/KanbanPage";
+import MembersPage from "../pages/project/MembersPage";
+import TimelinePage from "../pages/project/TimelinePage";
+import { selectCurrentUser } from '../store/slices/authSlice';
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
@@ -25,18 +30,23 @@ const ProjectDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const dispatch = useDispatch();
   const memberIds = project?.members?.map(member => member.userId) || [];
   const users = useSelector(state => selectUsersByIds(state, memberIds));
   const isUsersLoading = useSelector(selectUsersLoading);
+  const currentUser = useSelector(selectCurrentUser);
 
   // Get current tab from URL or default to 'kanban'
   const currentTab = location.pathname.split("/").pop();
   const activeTab = ["kanban", "members", "timeline"].includes(currentTab)
     ? currentTab
     : "kanban";
+
+  // Get user's role in the project
+  const currentUserRole = project?.members?.find(
+    member => member.userId === currentUser?.id
+  )?.role || null;
 
   useEffect(() => {
     fetchProject();
@@ -80,16 +90,6 @@ const ProjectDetails = () => {
     navigate(`/projects/${projectId}/${tab}`);
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      NOT_STARTED: 'bg-gray-100 text-gray-800',
-      IN_PROGRESS: 'bg-blue-100 text-blue-800',
-      ON_HOLD: 'bg-yellow-100 text-yellow-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800'
-    };
-    return colors[status] || colors.NOT_STARTED;
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -123,11 +123,6 @@ const ProjectDetails = () => {
           {headerActions}
         </PageHeader>
 
-        {/* Project Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          {/* Add your stat cards here */}
-        </div>
-
         {/* Navigation Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
           <nav className="flex space-x-4 p-4">
@@ -149,12 +144,33 @@ const ProjectDetails = () => {
               icon={<CalendarIcon className="h-5 w-5" />}
               label="Timeline"
             />
+            <TabButton
+              active={activeTab === "comments"}
+              onClick={() => handleTabChange("comments")}
+              icon={<ChatBubbleBottomCenterTextIcon className="h-5 w-5" />}
+              label="Comments"
+            />
           </nav>
         </div>
 
         {/* Main Content */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-          <Outlet />
+          <Routes>
+            <Route index element={<KanbanPage />} />
+            <Route path="kanban" element={<KanbanPage />} />
+            <Route path="members" element={<MembersPage />} />
+            <Route path="timeline" element={<TimelinePage />} />
+            <Route 
+              path="comments" 
+              element={
+                <CommentSection 
+                  entityId={projectId}
+                  projectRole={currentUserRole}
+                  project={project}
+                />
+              } 
+            />
+          </Routes>
         </div>
       </div>
 
@@ -171,12 +187,7 @@ const ProjectDetails = () => {
         projectId={projectId}
         currentMembers={project?.members || []}
       />
-      <ProjectSettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        project={project}
-        onSubmit={handleProjectUpdate}
-      />
+    
       <ConfirmationModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
