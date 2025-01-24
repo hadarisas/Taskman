@@ -45,7 +45,7 @@ const DroppableColumn = ({ id, children }) => {
   });
 
   return (
-    <div ref={setNodeRef} className="h-full">
+    <div ref={setNodeRef} className="h-full relative">
       {children}
     </div>
   );
@@ -59,7 +59,6 @@ const KanbanBoard = ({ tasks = [], onTaskMove, onTaskClick, onAddTask }) => {
       const taskId = active.id;
       const newStatus = over.id;
       
-      // Only call onTaskMove if the status is different
       const task = tasks.find(t => t.id === taskId);
       if (task && task.status !== newStatus) {
         onTaskMove(taskId, newStatus);
@@ -69,14 +68,16 @@ const KanbanBoard = ({ tasks = [], onTaskMove, onTaskClick, onAddTask }) => {
 
   return (
     <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 relative">
         {Object.values(COLUMNS).map((column) => (
           <div
             key={column.id}
-            className={`flex flex-col rounded-lg ${column.color} border ${column.borderColor} backdrop-blur-sm`}
+            style={{ transform: 'translate3d(0, 0, 0)' }}
+            className={`flex flex-col rounded-lg ${column.color} border ${column.borderColor} 
+                       backdrop-blur-sm relative`}
           >
             {/* Column Header */}
-            <div className="p-3 border-b border-inherit">
+            <div className="p-3 border-b border-inherit relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center min-w-0 space-x-2">
                   <span className="text-lg flex-shrink-0">{column.icon}</span>
@@ -113,6 +114,7 @@ const KanbanBoard = ({ tasks = [], onTaskMove, onTaskClick, onAddTask }) => {
           </div>
         ))}
       </div>
+      <div id="portal-container" className="fixed left-0 top-0 w-full h-full pointer-events-none" />
     </DndContext>
   );
 };

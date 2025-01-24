@@ -1,7 +1,7 @@
 import React from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { CalendarIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { createPortal } from 'react-dom';
 
 const priorityColors = {
   LOW: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
@@ -16,31 +16,40 @@ export const TaskCard = ({ task, onClick }) => {
       id: task.id,
     });
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        zIndex: isDragging ? 9999 : "auto",
-      }
-    : undefined;
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition: isDragging ? 'none' : undefined,
+    zIndex: isDragging ? 9999 : 'auto',
+    position: isDragging ? 'fixed' : undefined,
+    width: isDragging ? 'var(--dragging-width)' : undefined,
+    height: isDragging ? 'var(--dragging-height)' : undefined,
+    pointerEvents: isDragging ? 'none' : undefined,
+  };
 
   const handleClick = (e) => {
-    // Only trigger click if we're not dragging
     if (!isDragging) {
       e.stopPropagation();
       onClick();
     }
   };
 
-  return (
+  const card = (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       onClick={handleClick}
-      className={`bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm border border-gray-200 
-                 dark:border-gray-600 cursor-pointer hover:shadow-md transition-shadow
-                 group relative touch-none ${isDragging ? 'shadow-lg' : ''}`}
+      className={`
+        bg-white dark:bg-gray-700 p-3 rounded-lg 
+        border border-gray-200 dark:border-gray-600 
+        cursor-pointer transition-all duration-200
+        touch-none select-none
+        ${isDragging 
+          ? 'shadow-xl ring-2 ring-indigo-400 dark:ring-indigo-500 opacity-90'
+          : 'shadow-sm hover:shadow-md'
+        }
+      `}
     >
       {/* Task Title */}
       <h3 className="font-medium text-gray-900 dark:text-white mb-2">
@@ -78,4 +87,13 @@ export const TaskCard = ({ task, onClick }) => {
       </div>
     </div>
   );
+
+  if (isDragging) {
+    const portalContainer = document.getElementById('portal-container');
+    if (portalContainer) {
+      return createPortal(card, portalContainer);
+    }
+  }
+
+  return card;
 };
